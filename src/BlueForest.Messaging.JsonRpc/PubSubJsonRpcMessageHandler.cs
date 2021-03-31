@@ -13,7 +13,7 @@
     public class PubSubJsonRpcMessageHandler : MessageHandlerBase, IObserver<IPubSubJsonRpcPublishEvent>, IRequestIdFactory
     {
         public static long IdFactorySeedDefault = 0;
-        readonly PubSubJsonRpcTopic _topic;
+        readonly IRpcTopic _topic;
         readonly IPubSubJsonRpcInterface _client;
         readonly PubSubOptions _options;
 
@@ -23,9 +23,9 @@
         long _id = IdFactorySeedDefault;
         readonly long _seed = IdFactorySeedDefault;
         IRequestIdFactory _requestIdFactory;
-        readonly ConcurrentDictionary<RequestId, (RequestId, PubSubJsonRpcTopic)> _requestIdIndex = new ConcurrentDictionary<RequestId, (RequestId, PubSubJsonRpcTopic)>();
+        readonly ConcurrentDictionary<RequestId, (RequestId, IRpcTopic)> _requestIdIndex = new ConcurrentDictionary<RequestId, (RequestId, IRpcTopic)>();
 
-        public PubSubJsonRpcMessageHandler(IPubSubJsonRpcInterface client, PubSubJsonRpcTopic topic, IJsonRpcMessageFormatter formatter, PubSubOptions options = null)
+        public PubSubJsonRpcMessageHandler(IPubSubJsonRpcInterface client, IRpcTopic topic, IJsonRpcMessageFormatter formatter, PubSubOptions options = null)
             : base(formatter)
         {
             Requires.NotNull(client, nameof(client));
@@ -120,12 +120,9 @@
                     var mess = e.Payload.Length > 0 ? this.Formatter.Deserialize(e.Payload) : null;
                     if (mess is JsonRpcRequest request)
                     {
-                        if (PubSubJsonRpcTopic.TryParse(e.Topic, out var topic))
-                        {
-                            var oldId = request.RequestId;
-                            var newId = (RequestIdFactory ?? this).NextRequestId();
-                            _requestIdIndex.TryAdd(newId, (oldId, topic));
-                        }
+                        var oldId = request.RequestId;
+                        var newId = (RequestIdFactory ?? this).NextRequestId();
+                        _requestIdIndex.TryAdd(newId, (oldId, e.Topic));
                     }
                     return mess;
                 }
@@ -144,7 +141,7 @@
                 if (_requestIdIndex.TryGetValue(id, out var cache))
                 {
                     result.RequestId = cache.Item1;
-                    await client.PublishAsync(cache.Item2.AsResponse(), new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
+                    await client.PublishAsync(cache.Item2.Reverse(), new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
                 }
             }
             else if (content is JsonRpcError error)
@@ -153,12 +150,12 @@
                 if (_requestIdIndex.TryGetValue(id, out var cache))
                 {
                     error.RequestId = cache.Item1;
-                    await client.PublishAsync(cache.Item2.AsResponse(), new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
+                    await client.PublishAsync(cache.Item2.Reverse(), new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
                 }
             }
             else
             {
-                await client.PublishAsync(_topic.AsRequest(), new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
+                await client.PublishAsync(_topic, new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
             }
         }
     }

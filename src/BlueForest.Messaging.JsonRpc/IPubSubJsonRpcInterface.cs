@@ -33,7 +33,7 @@
     /// </summary>
     public interface IPubSubJsonRpcPublishEvent
     {
-        ReadOnlySequence<byte> Topic { get; }
+        IRpcTopic Topic { get; }
         ReadOnlySequence<byte> Payload { get; }
     }
 
@@ -54,14 +54,22 @@
         public SubscribeOptions Subscribe { get; set; }
     }
 
+    public interface IRpcTopic
+    {
+        ReadOnlyMemory<byte> Path { get; set; }
+        ReadOnlyMemory<byte> From { get; set; }
+        ReadOnlyMemory<byte> To { get; set; }
+        IRpcTopic Reverse(); 
+    }
+
     /// <summary>
     /// The Mqtt interface
     /// </summary>
     public interface IPubSubJsonRpcInterface : IObservable<IPubSubJsonRpcPublishEvent>
     {
-        ValueTask UnsubscribeAsync(ReadOnlySequence<byte> topic, CancellationToken cancel = default);
-        ValueTask SubscribeAsync(ReadOnlySequence<byte> topic, SubscribeOptions options = null, CancellationToken cancel = default);
-        ValueTask PublishAsync(ReadOnlySequence<byte> topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
+        ValueTask UnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);
+        ValueTask SubscribeAsync(IRpcTopic topic, SubscribeOptions options = null, CancellationToken cancel = default);
+        ValueTask PublishAsync(IRpcTopic topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
         ValueTask FlushAsync();
     }
 }

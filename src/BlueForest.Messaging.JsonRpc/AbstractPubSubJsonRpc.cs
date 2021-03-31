@@ -32,9 +32,8 @@ namespace BlueForest.Messaging.JsonRpc
         #endregion
 
         public abstract ValueTask FlushAsync();
-        public abstract ValueTask PublishAsync(ReadOnlySequence<byte> topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
-        public abstract ValueTask SubscribeAsync(ReadOnlySequence<byte> topic, SubscribeOptions options = null, CancellationToken cancel = default);
-        public abstract ValueTask UnsubscribeAsync(ReadOnlySequence<byte> topic, CancellationToken cancel = default);
-
+        public abstract ValueTask PublishAsync(IRpcTopic topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
+        public abstract ValueTask SubscribeAsync(IRpcTopic topic, SubscribeOptions options = null, CancellationToken cancel = default);
+        public abstract ValueTask UnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);
     }
 }

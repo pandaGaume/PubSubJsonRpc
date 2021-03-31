@@ -135,13 +135,15 @@
             var w = new ArrayBufferWriter<byte>();
             this.Formatter.Serialize(w, content);
 
+            var t = _topic;
+
             if (content is JsonRpcResult result)
             {
                 var id = result.RequestId;
                 if (_requestIdIndex.TryGetValue(id, out var cache))
                 {
                     result.RequestId = cache.Item1;
-                    await client.PublishAsync(cache.Item2.Reverse(), new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
+                    t = cache.Item2.Reverse();
                 }
             }
             else if (content is JsonRpcError error)
@@ -150,13 +152,10 @@
                 if (_requestIdIndex.TryGetValue(id, out var cache))
                 {
                     error.RequestId = cache.Item1;
-                    await client.PublishAsync(cache.Item2.Reverse(), new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
+                    t = cache.Item2.Reverse();
                 }
             }
-            else
-            {
-                await client.PublishAsync(_topic, new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
-            }
+            await client.PublishAsync(_topic, new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
         }
     }
 }

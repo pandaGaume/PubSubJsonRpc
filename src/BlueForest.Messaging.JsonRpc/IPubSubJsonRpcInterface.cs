@@ -31,7 +31,7 @@
     /// <summary>
     /// The Pub-Sub event interface 
     /// </summary>
-    public interface IPubSubJsonRpcPublishEvent
+    public interface IApplicationMessage
     {
         IRpcTopic Topic { get; }
         ReadOnlySequence<byte> Payload { get; }
@@ -65,11 +65,10 @@
     /// <summary>
     /// The Mqtt interface
     /// </summary>
-    public interface IPubSubJsonRpcInterface : IObservable<IPubSubJsonRpcPublishEvent>
+    public interface IPubSubJsonRpcInterface : IObservable<IApplicationMessage>
     {
         ValueTask UnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);
         ValueTask SubscribeAsync(IRpcTopic topic, SubscribeOptions options = null, CancellationToken cancel = default);
         ValueTask PublishAsync(IRpcTopic topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
-        ValueTask FlushAsync();
     }
 }

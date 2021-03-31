@@ -10,7 +10,7 @@
     using System.Threading.Channels;
     using System.Threading.Tasks;
 
-    public class PubSubJsonRpcMessageHandler : MessageHandlerBase, IObserver<IPubSubJsonRpcPublishEvent>, IRequestIdFactory
+    public class PubSubJsonRpcMessageHandler : MessageHandlerBase, IObserver<IApplicationMessage>, IRequestIdFactory
     {
         public static long IdFactorySeedDefault = 0;
         readonly IRpcTopic _topic;
@@ -18,7 +18,7 @@
         readonly PubSubOptions _options;
 
         IDisposable _clientSubscription;
-        Channel<IPubSubJsonRpcPublishEvent> _inputChannel;
+        Channel<IApplicationMessage> _inputChannel;
 
         long _id = IdFactorySeedDefault;
         readonly long _seed = IdFactorySeedDefault;
@@ -39,7 +39,7 @@
         public async ValueTask<PubSubJsonRpcMessageHandler> StartAsync()
         {
             _clientSubscription = _client.Subscribe(this); // IObservable<>
-            _inputChannel = Channel.CreateUnbounded<IPubSubJsonRpcPublishEvent>();
+            _inputChannel = Channel.CreateUnbounded<IApplicationMessage>();
             await _client.SubscribeAsync(_topic, _options?.Subscribe);
             return this;
         }
@@ -80,7 +80,7 @@
         {
         }
 
-        public virtual void OnNext(IPubSubJsonRpcPublishEvent value)
+        public virtual void OnNext(IApplicationMessage value)
         {
             _inputChannel.Writer.TryWrite(value);
         }
@@ -101,21 +101,18 @@
             }
         }
 
-        protected override ValueTask FlushAsync(CancellationToken cancellationToken)
-        {
-            return _client.FlushAsync(); 
-        }
+        protected override ValueTask FlushAsync(CancellationToken cancellationToken) => default;
 
         protected  override ValueTask<JsonRpcMessage> ReadCoreAsync(CancellationToken cancellationToken) => ReadCoreAsync(_inputChannel, cancellationToken);
 
         protected  override ValueTask WriteCoreAsync(JsonRpcMessage content, CancellationToken cancellationToken) => WriteCoreAsync(_client, content, cancellationToken);
         #endregion
 
-        protected async virtual ValueTask<JsonRpcMessage> ReadCoreAsync(Channel<IPubSubJsonRpcPublishEvent> input, CancellationToken cancellationToken)
+        protected async virtual ValueTask<JsonRpcMessage> ReadCoreAsync(Channel<IApplicationMessage> input, CancellationToken cancellationToken)
         {
             if (await input.Reader.WaitToReadAsync(cancellationToken))
             {
-                if (input.Reader.TryRead(out IPubSubJsonRpcPublishEvent e))
+                if (input.Reader.TryRead(out IApplicationMessage e))
                 {
                     var mess = e.Payload.Length > 0 ? this.Formatter.Deserialize(e.Payload) : null;
                     if (mess is JsonRpcRequest request)
@@ -155,7 +152,7 @@
                     t = cache.Item2.Reverse();
                 }
             }
-            await client.PublishAsync(_topic, new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
+            await client.PublishAsync(t, new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
         }
     }
 }

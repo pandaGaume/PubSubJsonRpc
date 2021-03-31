@@ -5,6 +5,10 @@ VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlueForest.Messaging.JsonRpc", "src\BlueForest.Messaging.JsonRpc\BlueForest.Messaging.JsonRpc.csproj", "{0C6CDC91-D1F8-4B70-ABA7-7334E9810DC1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlueForest.Messaging.JsonRpc.MqttNet", "src\mqtt\MqttNet\BlueForest.Messaging.JsonRpc.MqttNet\BlueForest.Messaging.JsonRpc.MqttNet.csproj", "{5B161F1A-B09A-4AF5-B995-6C19A0B14126}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Mqtt", "Mqtt", "{04DC2186-85E2-4686-9D60-FCA49AF1AE86}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,9 +19,16 @@ Global
 		{0C6CDC91-D1F8-4B70-ABA7-7334E9810DC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C6CDC91-D1F8-4B70-ABA7-7334E9810DC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C6CDC91-D1F8-4B70-ABA7-7334E9810DC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B161F1A-B09A-4AF5-B995-6C19A0B14126}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B161F1A-B09A-4AF5-B995-6C19A0B14126}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B161F1A-B09A-4AF5-B995-6C19A0B14126}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B161F1A-B09A-4AF5-B995-6C19A0B14126}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{5B161F1A-B09A-4AF5-B995-6C19A0B14126} = {04DC2186-85E2-4686-9D60-FCA49AF1AE86}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {512C26D0-E1EF-4D05-A10D-9457BEDBD18D}

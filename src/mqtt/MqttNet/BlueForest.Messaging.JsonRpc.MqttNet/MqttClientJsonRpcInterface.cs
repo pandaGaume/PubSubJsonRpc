@@ -71,7 +71,6 @@ namespace BlueForest.Messaging.JsonRpc.MQTTnet
                 Payload = payload.ToArray(),
                 QualityOfServiceLevel = MqttQualityOfServiceLevel.AtLeastOnce
             };
-            var payloadStr = Encoding.UTF8.GetString(mess.Payload);
             try
             {
                 var res = await _client.PublishAsync(mess, cancel);
@@ -96,7 +95,7 @@ namespace BlueForest.Messaging.JsonRpc.MQTTnet
                 var res = await _client.SubscribeAsync(o, cancel);
                 return res.Items[0].ResultCode <= MqttClientSubscribeResultCode.GrantedQoS2;
             }
-            catch(Exception ex) 
+            catch 
             {
                 return false;
             }

@@ -44,10 +44,8 @@ namespace Samples.MqttNet.Service
         {
             if (Uri.TryCreate(path, UriKind.Absolute, out Uri uri))
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    return new ConfigurationBuilder().AddJsonStream(await LoadJsonStreamAsync(client, uri)).Build();
-                }
+                using HttpClient client = new HttpClient();
+                return new ConfigurationBuilder().AddJsonStream(await LoadJsonStreamAsync(client, uri)).Build();
             }
 
             return new ConfigurationBuilder().AddJsonFile(path).Build();
@@ -69,13 +67,9 @@ namespace Samples.MqttNet.Service
         {
             // note : this is an extension located in Microsoft.Extensions.Configuration.Binder 
             var settings = config.Get<IotHubSettings>();
-            using (var hub = new IotHubService())
-            {
-                await hub.StartServiceAsync(settings);
-                
-                while (true) { await Task.Delay(10000); }
-            }
-
+            using var hub = new IotHubService();
+            await hub.StartServiceAsync(settings);
+            while (true) { await Task.Delay(10000); }
         }
     }
 }

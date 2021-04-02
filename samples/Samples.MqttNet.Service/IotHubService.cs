@@ -1,8 +1,6 @@
 ﻿using BlueForest.Messaging.JsonRpc;
 using BlueForest.Messaging.JsonRpc.MQTTnet;
 using MQTTnet;
-using MQTTnet.Client;
-using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Options;
 using MQTTnet.Extensions.ManagedClient;
 using Samples.Commons;
@@ -10,7 +8,6 @@ using Samples.Commons.JsonRpc;
 using StreamJsonRpc;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Samples.MqttNet.Service

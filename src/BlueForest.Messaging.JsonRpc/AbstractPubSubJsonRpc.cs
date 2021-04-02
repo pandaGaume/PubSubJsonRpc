@@ -12,26 +12,27 @@ namespace BlueForest.Messaging.JsonRpc
     /// </summary>
     public abstract class AbstractPubSubJsonRpc : IPubSubJsonRpcInterface
     {
-        readonly List<IObserver<IApplicationMessage>> _observers;
+        readonly List<IObserver<IPubSubEvent>> _observers;
 
-        public AbstractPubSubJsonRpc(List<IObserver<IApplicationMessage>> container = null)
+ 
+        public AbstractPubSubJsonRpc(List<IObserver<IPubSubEvent>> container = null)
         {
-            _observers = container?? new List<IObserver<IApplicationMessage>>(1);
+            _observers = container?? new List<IObserver<IPubSubEvent>>(1);
         }
 
         #region IObservable<IPubSubJsonRpcPublishEvent>
-        public IDisposable Subscribe(IObserver<IApplicationMessage> observer)
+        public IDisposable Subscribe(IObserver<IPubSubEvent> observer)
         {
             if (!_observers.Contains(observer))
             {
                 _observers.Add(observer);
             }
 
-            return new Unsubscriber<IApplicationMessage>(_observers, observer);
+            return new Unsubscriber<IPubSubEvent>(_observers, observer);
         }
         #endregion
 
-        protected void FirePublishEvent(IApplicationMessage e)
+        protected void OnEvent(IPubSubEvent e)
         {
             foreach(var o in _observers)
             {
@@ -39,8 +40,9 @@ namespace BlueForest.Messaging.JsonRpc
             }
         }
 
-        public abstract ValueTask PublishAsync(IRpcTopic topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
-        public abstract ValueTask SubscribeAsync(IRpcTopic topic, SubscribeOptions options = null, CancellationToken cancel = default);
-        public abstract ValueTask UnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);
+        public abstract bool IsConnected { get; }
+        public abstract ValueTask<bool> TryPublishAsync(IRpcTopic topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
+        public abstract ValueTask<bool> TrySubscribeAsync(IRpcTopic topic, SubscribeOptions options = null, CancellationToken cancel = default);
+        public abstract ValueTask<bool> TryUnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);
     }
 }

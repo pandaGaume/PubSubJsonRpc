@@ -1,6 +1,7 @@
 ﻿namespace BlueForest.Messaging.JsonRpc
 {
     using Microsoft;
+    using Microsoft.VisualStudio.Threading;
     using StreamJsonRpc;
     using StreamJsonRpc.Protocol;
     using System;
@@ -10,7 +11,7 @@
     using System.Threading.Channels;
     using System.Threading.Tasks;
 
-    public class PubSubJsonRpcMessageHandler : MessageHandlerBase, IObserver<IApplicationMessage>, IRequestIdFactory
+    public class PubSubJsonRpcMessageHandler : MessageHandlerBase, IObserver<IPubSubEvent>, IRequestIdFactory
     {
         public static long IdFactorySeedDefault = 0;
         readonly IRpcTopic _topic;
@@ -18,7 +19,7 @@
         readonly PubSubOptions _options;
 
         IDisposable _clientSubscription;
-        Channel<IApplicationMessage> _inputChannel;
+        Channel<IPublishEvent> _messageChannel;
 
         long _id = IdFactorySeedDefault;
         readonly long _seed = IdFactorySeedDefault;
@@ -32,29 +33,14 @@
             Requires.NotNull(topic, nameof(topic));
             Requires.NotNull(formatter, nameof(formatter));
             _client = client;
+            if(_client.IsConnected)
+            {
+                OnConnected();
+            } 
+            _clientSubscription = _client.Subscribe(this); // IObservable<>
             _topic = topic;
             _options = options;
-         }
-
-        public async ValueTask<PubSubJsonRpcMessageHandler> StartAsync()
-        {
-            _clientSubscription = _client.Subscribe(this); // IObservable<>
-            _inputChannel = Channel.CreateUnbounded<IApplicationMessage>();
-            await _client.SubscribeAsync(_topic, _options?.Subscribe);
-            return this;
-        }
-        public async ValueTask<PubSubJsonRpcMessageHandler> StopAsync()
-        {
-            try
-            {
-                await _client.UnsubscribeAsync(_topic);
-            }
-            finally
-            {
-                _clientSubscription?.Dispose();
-                _inputChannel.Writer.TryComplete();
-            }
-            return this;
+             _messageChannel = Channel.CreateUnbounded<IPublishEvent>();
         }
 
         public IRequestIdFactory RequestIdFactory
@@ -80,12 +66,25 @@
         {
         }
 
-        public virtual void OnNext(IApplicationMessage value)
+        public virtual void OnNext(IPubSubEvent value)
         {
-            _inputChannel.Writer.TryWrite(value);
+            if (value is IPublishEvent mess)
+            {
+                _messageChannel.Writer.TryWrite(mess);
+            } 
+            else if( value is IConnectionEvent conn)
+            {
+               if(conn.IsConnected)
+                {
+                    OnConnected();
+                }
+                else
+                {
+                    OnDisconnected();
+                }
+            }
         }
         #endregion
-
         #region MessageHandlerBase
         public override bool CanRead => true;
         public override bool CanWrite => true;
@@ -103,36 +102,37 @@
 
         protected override ValueTask FlushAsync(CancellationToken cancellationToken) => default;
 
-        protected  override ValueTask<JsonRpcMessage> ReadCoreAsync(CancellationToken cancellationToken) => ReadCoreAsync(_inputChannel, cancellationToken);
-
-        protected  override ValueTask WriteCoreAsync(JsonRpcMessage content, CancellationToken cancellationToken) => WriteCoreAsync(_client, content, cancellationToken);
-        #endregion
-
-        protected async virtual ValueTask<JsonRpcMessage> ReadCoreAsync(Channel<IApplicationMessage> input, CancellationToken cancellationToken)
+        protected async override ValueTask<JsonRpcMessage> ReadCoreAsync(CancellationToken cancellationToken)
         {
-            if (await input.Reader.WaitToReadAsync(cancellationToken))
+            while (await _messageChannel.Reader.WaitToReadAsync(cancellationToken))
             {
-                if (input.Reader.TryRead(out IApplicationMessage e))
+                if (_messageChannel.Reader.TryRead(out IPublishEvent e))
                 {
-                    var mess = e.Payload.Length > 0 ? this.Formatter.Deserialize(e.Payload) : null;
-                    if (mess is JsonRpcRequest request)
+                    try
                     {
-                        var oldId = request.RequestId;
-                        var newId = (RequestIdFactory ?? this).NextRequestId();
-                        _requestIdIndex.TryAdd(newId, (oldId, e.Topic));
+                        var mess = e.Payload.Length > 0 ? this.Formatter.Deserialize(e.Payload) : null;
+                        if (mess is JsonRpcRequest request)
+                        {
+                            var oldId = request.RequestId;
+                            var newId = (RequestIdFactory ?? this).NextRequestId();
+                            request.RequestId = newId;
+                            _requestIdIndex.TryAdd(newId, (oldId, e.Topic));
+                        }
+                        return mess;
                     }
-                    return mess;
+                    catch
+                    {
+                        await WriteErrorAsync(e.Topic.Reverse(), JsonRpcErrorCode.ParseError, Ressources.ExceptionMessages.ParseError, cancellationToken);
+                    }
                 }
             }
             return default;
         }
 
-        protected async virtual ValueTask WriteCoreAsync(IPubSubJsonRpcInterface client, JsonRpcMessage content, CancellationToken cancellationToken)
+        protected override ValueTask WriteCoreAsync(JsonRpcMessage content, CancellationToken cancellationToken) => WriteCoreAsync(content, cancellationToken, null);
+        protected async virtual ValueTask WriteCoreAsync(JsonRpcMessage content, CancellationToken cancellationToken, IRpcTopic topic)
         {
             var w = new ArrayBufferWriter<byte>();
-            this.Formatter.Serialize(w, content);
-
-            var t = _topic;
 
             if (content is JsonRpcResult result)
             {
@@ -140,19 +140,64 @@
                 if (_requestIdIndex.TryGetValue(id, out var cache))
                 {
                     result.RequestId = cache.Item1;
-                    t = cache.Item2.Reverse();
+                    this.Formatter.Serialize(w, content);
+                    var t = cache.Item2.Reverse();
+                    if (!await _client.TryPublishAsync(t, new ReadOnlySequence<byte>(w.WrittenMemory), _options?.Publish, cancellationToken))
+                    {
+                        throw new PubSubException(string.Format(Ressources.ExceptionMessages.PublishFailed, t));
+                    }
                 }
             }
-            else if (content is JsonRpcError error)
+            else
             {
-                var id = error.RequestId;
-                if (_requestIdIndex.TryGetValue(id, out var cache))
+                var t = topic ?? _topic;
+                this.Formatter.Serialize(w, content);
+                if (!await _client.TryPublishAsync(t, new ReadOnlySequence<byte>(w.WrittenMemory), _options?.Publish, cancellationToken))
                 {
-                    error.RequestId = cache.Item1;
-                    t = cache.Item2.Reverse();
+                    throw new PubSubException(string.Format(Ressources.ExceptionMessages.PublishFailed, t));
                 }
             }
-            await client.PublishAsync(t, new ReadOnlySequence<byte>(w.GetMemory()), _options?.Publish, cancellationToken);
         }
+        
+        #endregion
+
+        private async ValueTask WriteErrorAsync(IRpcTopic topic, JsonRpcErrorCode code, string message, CancellationToken cancellationToken)
+        {
+            var error = new JsonRpcError()
+            {
+                Error = new JsonRpcError.ErrorDetail() { Code = code, Message = message }
+            };
+            await WriteCoreAsync(error, cancellationToken, topic);
+        }
+
+        private async ValueTask<PubSubJsonRpcMessageHandler> StopAsync()
+        {
+            try
+            {
+                if (!await _client.TryUnsubscribeAsync(_topic))
+                {
+                    throw new PubSubException(string.Format(Ressources.ExceptionMessages.UnsubscribeFailed, _topic));
+                }
+            }
+            finally
+            {
+                _clientSubscription?.Dispose();
+                _clientSubscription = null;
+                _messageChannel.Writer.TryComplete();
+                _messageChannel = null;
+            }
+            return this;
+        }
+
+        private void OnConnected()
+        {
+            if (!_client.TrySubscribeAsync(_topic, _options?.Subscribe).GetAwaiter().GetResult())
+            {
+                throw new PubSubException(string.Format(Ressources.ExceptionMessages.SubscribeFailed, _topic));
+            }
+        }
+
+        private void OnDisconnected() { }
+
     }
 }

@@ -5,13 +5,14 @@
     using System.Threading;
     using System.Threading.Tasks;
 
+    [Serializable]
     public class PubSubException : Exception
     {
-        protected PubSubException(string message)
+        public PubSubException(string message)
             : base(message)
         {
         }
-        protected PubSubException(string message, Exception innerException)
+        public PubSubException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
@@ -31,10 +32,19 @@
     /// <summary>
     /// The Pub-Sub event interface 
     /// </summary>
-    public interface IApplicationMessage
+    public interface IPubSubEvent
+    {
+    }
+
+    public interface IPublishEvent : IPubSubEvent
     {
         IRpcTopic Topic { get; }
         ReadOnlySequence<byte> Payload { get; }
+    }
+
+    public interface IConnectionEvent : IPubSubEvent
+    {
+        bool IsConnected { get; set; }
     }
 
     public class PublishOptions
@@ -43,6 +53,7 @@
 
         public PubSubQOS QualityOfService = QualityOfServiceDefault;
     }
+
 
     public class SubscribeOptions
     {
@@ -65,10 +76,11 @@
     /// <summary>
     /// The Mqtt interface
     /// </summary>
-    public interface IPubSubJsonRpcInterface : IObservable<IApplicationMessage>
+    public interface IPubSubJsonRpcInterface : IObservable<IPubSubEvent>
     {
-        ValueTask UnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);
-        ValueTask SubscribeAsync(IRpcTopic topic, SubscribeOptions options = null, CancellationToken cancel = default);
-        ValueTask PublishAsync(IRpcTopic topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
+        bool IsConnected { get; }
+        ValueTask<bool> TryUnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);
+        ValueTask<bool> TrySubscribeAsync(IRpcTopic topic, SubscribeOptions options = null, CancellationToken cancel = default);
+        ValueTask<bool> TryPublishAsync(IRpcTopic topic, ReadOnlySequence<byte> payload, PublishOptions options = null, CancellationToken cancel = default);
     }
 }

@@ -2,7 +2,9 @@
 namespace BlueForest.Messaging.JsonRpc
 {
     using System;
+    using System.Buffers;
     using System.Diagnostics.CodeAnalysis;
+    using System.Text;
 
     public class RpcTopicBase : IRpcTopic, IEquatable<IRpcTopic>
     {
@@ -33,6 +35,11 @@ namespace BlueForest.Messaging.JsonRpc
         public bool Equals([AllowNull] IRpcTopic other)
         {
             return (other?.From.Equals(_f) ?? false) && (other?.To.Equals(_t) ?? false) && (other?.Path.Equals(_p) ?? false);
+        }
+
+        public override string ToString()
+        {
+            return Encoding.UTF8.GetString(this.Assemble().ToArray());
         }
 
     }

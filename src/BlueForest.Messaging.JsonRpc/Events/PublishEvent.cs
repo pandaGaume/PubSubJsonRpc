@@ -1,7 +1,7 @@
 ﻿namespace BlueForest.Messaging.JsonRpc
 {
     using System.Buffers;
-    public class ApplicationMessageBase : IApplicationMessage
+    public class PublishEvent : IPublishEvent
     {
         public IRpcTopic Topic { get; set; }
 

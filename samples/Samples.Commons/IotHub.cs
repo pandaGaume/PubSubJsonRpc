@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Samples.Commons
 {
@@ -24,15 +25,15 @@ namespace Samples.Commons
         public string Description { get => _desc; set => _desc = value; }
     }
 
-    public class IotHub : IIOtHub
+    public class IotHub : IIotHub
     {
-        readonly ConcurrentDictionary<string, IIotNode> _storage ;
+        readonly ConcurrentDictionary<string, IotNode> _storage ;
 
         public IotHub()
         {
-            _storage = new ConcurrentDictionary<string, IIotNode>() ;
+            _storage = new ConcurrentDictionary<string, IotNode>() ;
         }
-        public IotHub(IEnumerable<IIotNode> nodes) : this()
+        public IotHub(IEnumerable<IotNode> nodes) : this()
         {
             foreach(var n in nodes)
             {
@@ -40,9 +41,16 @@ namespace Samples.Commons
             }
         }
 
-        public IEnumerable<IIotNode> Browse() => _storage.Select(p=>p.Value);
-        public bool TryAdd(string key, IIotNode node) => _storage.TryAdd(key, node);
-        public bool TryGet(string key, out IIotNode node) => _storage.TryGetValue(key, out node);
-        public bool TryRemove(string key, out IIotNode node) => _storage.TryRemove(key, out node);
+        public Task<IEnumerable<IotNode>> Browse() => Task.FromResult(_storage.Select(p=>p.Value));
+        public Task<bool> Add(string key, IotNode node) => Task.FromResult(_storage.TryAdd(key, node));
+        public Task<IotNode> TryGet(string key)
+        {
+            if (_storage.TryGetValue(key, out var node))
+            {
+                return Task.FromResult(node);
+            }
+            return null;
+        }
+        public Task<bool> Remove(string key) => Task.FromResult(_storage.TryRemove(key, out var node));
     }
 }

@@ -2,11 +2,11 @@
   "Broker": {
     "Host": "broker01.blueforest.io",
     "Port": 1883,
-    "ClientIdTemplate": "dotvision-BlueForest.IotHub-001",
+    "ClientIdTemplate": "dotvision-BlueForest.IotHub-002",
     "UserName": "dotvision",
     "Password": "UACBYQzQeXw7EgUq"
   },
   "Rpc": {
-    "Topic": "dotvision/rpc/0/IotHub-001/*"
+    "Topic": "dotvision/rpc/0/#/IotHub-Client001"
   }
 }

@@ -10,12 +10,12 @@ namespace BlueForest.Messaging.JsonRpc
     /// <summary>
     /// A base abstract class to implement the Pub/Sub interface with the IObservable<IPubSubJsonRpcPublishEvent> logic.
     /// </summary>
-    public abstract class AbstractPubSubJsonRpc : IPubSubJsonRpcInterface
+    public abstract class AbstractPubSubInterface : IPubSubInterface
     {
         readonly List<IObserver<IPubSubEvent>> _observers;
 
  
-        public AbstractPubSubJsonRpc(List<IObserver<IPubSubEvent>> container = null)
+        public AbstractPubSubInterface(List<IObserver<IPubSubEvent>> container = null)
         {
             _observers = container?? new List<IObserver<IPubSubEvent>>(1);
         }

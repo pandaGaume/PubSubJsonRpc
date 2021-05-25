@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace BlueForest.Messaging.JsonRpc.MQTTnet
 {
-    public class MqttClientJsonRpcInterface : AbstractPubSubJsonRpc, IMqttApplicationMessageReceivedHandler, IMqttClientConnectedHandler, IMqttClientDisconnectedHandler
+    public class MqttClientNetInterface : AbstractPubSubInterface, IMqttApplicationMessageReceivedHandler, IMqttClientConnectedHandler, IMqttClientDisconnectedHandler
     {
         readonly IMqttClient _client;
         readonly IMqttApplicationMessageReceivedHandler _ApplicationMessageReceivedDelegate;
@@ -24,7 +24,7 @@ namespace BlueForest.Messaging.JsonRpc.MQTTnet
         readonly IMqttClientDisconnectedHandler _DisconnectedHandlerDelegate;
         readonly Func<MqttApplicationMessageReceivedEventArgs, bool> _predicate;
 
-        public MqttClientJsonRpcInterface(IMqttClient client, Func<MqttApplicationMessageReceivedEventArgs, bool> predicate = null)
+        public MqttClientNetInterface(IMqttClient client, Func<MqttApplicationMessageReceivedEventArgs, bool> predicate = null)
         {
             _client = client ?? throw new ArgumentNullException(nameof(client));
             _predicate = predicate;
@@ -123,7 +123,7 @@ namespace BlueForest.Messaging.JsonRpc.MQTTnet
             return new PublishEvent()
             {
                 Topic = MqttRpcTopic.Parse(mess.Topic),
-                Payload = new ReadOnlySequence<byte>(mess.Payload)
+                Payload = mess.Payload != null ? new ReadOnlySequence<byte>(mess.Payload) : ReadOnlySequence<byte>.Empty
             };
         }
         private IConnectionEvent BuildConnectionEvent(bool status)

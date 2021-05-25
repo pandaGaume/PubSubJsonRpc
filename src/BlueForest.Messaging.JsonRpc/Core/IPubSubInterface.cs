@@ -8,12 +8,8 @@
     [Serializable]
     public class PubSubException : Exception
     {
-        public PubSubException(string message)
-            : base(message)
-        {
-        }
-        public PubSubException(string message, Exception innerException)
-            : base(message, innerException)
+        public PubSubException(string message, params object[] p)
+            : base(string.Format(message,p))
         {
         }
     }
@@ -70,13 +66,14 @@
         ReadOnlyMemory<byte> Path { get; set; }
         ReadOnlyMemory<byte> From { get; set; }
         ReadOnlyMemory<byte> To { get; set; }
-        IRpcTopic Reverse(); 
+        IRpcTopic ReverseInPlace();
+        IRpcTopic AsSubscribeAny();
     }
 
     /// <summary>
     /// The Mqtt interface
     /// </summary>
-    public interface IPubSubJsonRpcInterface : IObservable<IPubSubEvent>
+    public interface IPubSubInterface : IObservable<IPubSubEvent>
     {
         bool IsConnected { get; }
         ValueTask<bool> TryUnsubscribeAsync(IRpcTopic topic, CancellationToken cancel = default);

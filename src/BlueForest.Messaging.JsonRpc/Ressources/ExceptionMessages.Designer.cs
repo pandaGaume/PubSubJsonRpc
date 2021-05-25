@@ -61,6 +61,15 @@ namespace BlueForest.Messaging.JsonRpc.Ressources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Internal Error {0}.
+        /// </summary>
+        internal static string InternalError {
+            get {
+                return ResourceManager.GetString("InternalError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An error occurred on the server while parsing the JSON text..
         /// </summary>
         internal static string ParseError {
@@ -75,6 +84,15 @@ namespace BlueForest.Messaging.JsonRpc.Ressources {
         internal static string PublishFailed {
             get {
                 return ResourceManager.GetString("PublishFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Request Id is missing.
+        /// </summary>
+        internal static string RequestIdMissing {
+            get {
+                return ResourceManager.GetString("RequestIdMissing", resourceCulture);
             }
         }
         

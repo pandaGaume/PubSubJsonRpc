@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Samples.Commons
 {
@@ -14,14 +15,14 @@ namespace Samples.Commons
 
     public interface IIotCompoundNode
     {
-        bool TryAdd(string key, IIotNode node);
-        bool TryRemove(string key, out IIotNode node);
-        bool TryGet(string key, out IIotNode node);
-        IEnumerable<IIotNode> Browse();
+        Task<bool> Add(string key, IotNode node);
+        Task<bool> Remove(string key);
+        Task<IotNode> TryGet(string key);
+        Task<IEnumerable<IotNode>> Browse();
     }
 
 
-    public interface IIOtHub : IIotCompoundNode
+    public interface IIotHub : IIotCompoundNode
     {
     }
 }

@@ -117,11 +117,17 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="InternalError" xml:space="preserve">
+    <value>Erreur interne {0}</value>
+  </data>
   <data name="ParseError" xml:space="preserve">
     <value>Une erreur s'est produite sur le serveur lors de l'analyse du texte JSON.</value>
   </data>
   <data name="PublishFailed" xml:space="preserve">
     <value>La publication vers "{0}" a échouée .</value>
+  </data>
+  <data name="RequestIdMissing" xml:space="preserve">
+    <value>Invalid Requete sans Id</value>
   </data>
   <data name="SubscribeFailed" xml:space="preserve">
     <value>L'abonnement à"{0}" a échouée .</value>

@@ -13,9 +13,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Commons", "Commons", "{C755
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{4ECB6553-7AB4-4751-B921-6E47C09FF89D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples.Commons", "samples\Samples.Commons\Samples.Commons.csproj", "{F5617DB3-213F-462D-94D5-70D8A341E094}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Samples.Commons", "samples\Samples.Commons\Samples.Commons.csproj", "{F5617DB3-213F-462D-94D5-70D8A341E094}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples.MqttNet.Service", "samples\Samples.MqttNet.Service\Samples.MqttNet.Service.csproj", "{D83E222C-1534-4FCA-B192-39A14921A108}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Samples.MqttNet.Service", "samples\Samples.MqttNet.Service\Samples.MqttNet.Service.csproj", "{D83E222C-1534-4FCA-B192-39A14921A108}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Samples.MqttNet.Client", "samples\Samples.MqttNet.Client\Samples.MqttNet.Client.csproj", "{6F454DAD-49CC-4714-B82A-11E769DA4F8F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StreamJsonRpc", "..\vs-streamjsonrpc\src\StreamJsonRpc\StreamJsonRpc.csproj", "{90135293-2FFC-4488-BAF9-0CA04C2BA25F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,14 @@ Global
 		{D83E222C-1534-4FCA-B192-39A14921A108}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D83E222C-1534-4FCA-B192-39A14921A108}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D83E222C-1534-4FCA-B192-39A14921A108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F454DAD-49CC-4714-B82A-11E769DA4F8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F454DAD-49CC-4714-B82A-11E769DA4F8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F454DAD-49CC-4714-B82A-11E769DA4F8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F454DAD-49CC-4714-B82A-11E769DA4F8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90135293-2FFC-4488-BAF9-0CA04C2BA25F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90135293-2FFC-4488-BAF9-0CA04C2BA25F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90135293-2FFC-4488-BAF9-0CA04C2BA25F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90135293-2FFC-4488-BAF9-0CA04C2BA25F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,6 +60,7 @@ Global
 		{4ECB6553-7AB4-4751-B921-6E47C09FF89D} = {04DC2186-85E2-4686-9D60-FCA49AF1AE86}
 		{F5617DB3-213F-462D-94D5-70D8A341E094} = {C75599CE-C436-495E-ADCB-3B1ED6FFEF2F}
 		{D83E222C-1534-4FCA-B192-39A14921A108} = {4ECB6553-7AB4-4751-B921-6E47C09FF89D}
+		{6F454DAD-49CC-4714-B82A-11E769DA4F8F} = {4ECB6553-7AB4-4751-B921-6E47C09FF89D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {512C26D0-E1EF-4D05-A10D-9457BEDBD18D}

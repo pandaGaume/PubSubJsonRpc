@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\vs-streamjsonrpc\src\StreamJsonRpc\StreamJsonRpc.csproj" />
     <ProjectReference Include="..\..\..\BlueForest.Messaging.JsonRpc\BlueForest.Messaging.JsonRpc.csproj" />
   </ItemGroup>
 

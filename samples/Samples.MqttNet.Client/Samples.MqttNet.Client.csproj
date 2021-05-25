@@ -6,20 +6,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\vs-streamjsonrpc\src\StreamJsonRpc\StreamJsonRpc.csproj" />
     <ProjectReference Include="..\..\src\BlueForest.Messaging.JsonRpc\BlueForest.Messaging.JsonRpc.csproj" />
     <ProjectReference Include="..\..\src\mqtt\MqttNet\BlueForest.Messaging.JsonRpc.MqttNet\BlueForest.Messaging.JsonRpc.MqttNet.csproj" />
     <ProjectReference Include="..\Samples.Commons\Samples.Commons.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="servicesettings.json">
+    <None Update="clientsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

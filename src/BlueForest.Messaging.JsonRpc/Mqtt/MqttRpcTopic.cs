@@ -9,7 +9,9 @@
         internal static Regex ValidateExpression = new Regex(@"^((\w+)/)+(\w+)$", RegexOptions.Compiled);
 
         public const byte SEPARATOR = (byte)'/';
+        public const byte WILDCHAR = (byte)'#';
 
+ 
         public static MqttRpcTopic Parse(string str, Encoding encoding = null)
         {
             var e = encoding ?? Encoding.UTF8;
@@ -37,5 +39,13 @@
         public MqttRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to) : base(path, from, to) 
         { 
         }
+
+        public override IRpcTopic AsSubscribeAny()
+        {
+            byte[] fromAny = new byte[] { SEPARATOR, WILDCHAR };
+            var to = From;
+            return new MqttRpcTopic(Path, fromAny, to);
+        }
+
     }
 }

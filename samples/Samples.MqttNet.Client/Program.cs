@@ -1,17 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Samples.Commons;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Samples.MqttNet.Service
+namespace Samples.MqttNet.Client
 {
-    public class Program
+    class Program
     {
         public static string ConfigPathKey = "config";
-        public static string DefaultConfigPath = "servicesettings.json";
+        public static string DefaultConfigPath = "clientsettings.json";
 
         public const string Signature =
          "    ____  _              ______                  _\r\n"
@@ -26,7 +25,7 @@ namespace Samples.MqttNet.Service
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine(Signature, "Rpc Json over Mqtt - MqttNet service sample - v1.0");
+            Console.WriteLine(Signature, "Rpc Json over Mqtt - MqttNet Client sample - v1.0");
 
             var switchMappings = new Dictionary<string, string>()
             {
@@ -37,9 +36,18 @@ namespace Samples.MqttNet.Service
 
             string configPath = commandLineConfig[ConfigPathKey] ?? DefaultConfigPath;
 
-            using var service = await StartServiceAsync(await GetJsonConfigAsync(configPath));
-       
-            while (true) { await Task.Delay(10000); }
+            using (var client = await StartClientAsync(await GetJsonConfigAsync(configPath)))
+            {
+                while (true)
+                {
+                    foreach (var n in await client.Proxy.Browse())
+                    {
+                        Console.WriteLine(n.DisplayName);
+                    }
+                    await Task.Delay(1000);
+                }
+                //while (true) { await Task.Delay(10000); }
+            }
         }
 
         static async Task<IConfigurationRoot> GetJsonConfigAsync(string path)
@@ -65,13 +73,14 @@ namespace Samples.MqttNet.Service
             return null;
         }
 
-        public static async Task<IotHubService> StartServiceAsync(IConfigurationRoot config)
+        public static async Task<IotHubClient> StartClientAsync(IConfigurationRoot config)
         {
             // note : this is an extension located in Microsoft.Extensions.Configuration.Binder 
-            var settings = config.Get<IotHubSettings>();
-            var hub = new IotHubService();
-            var rpc = await hub.StartServiceAsync(settings);
-            return hub;
+            var settings = config.Get<IotHubClientSettings>();
+            var client = new IotHubClient();
+            await client.StartClientAsync(settings);
+            return client;
         }
     }
 }
+

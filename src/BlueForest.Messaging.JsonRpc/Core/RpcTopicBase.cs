@@ -6,7 +6,7 @@ namespace BlueForest.Messaging.JsonRpc
     using System.Diagnostics.CodeAnalysis;
     using System.Text;
 
-    public class RpcTopicBase : IRpcTopic, IEquatable<IRpcTopic>
+    public abstract class RpcTopicBase : IRpcTopic, IEquatable<IRpcTopic>
     {
         protected ReadOnlyMemory<byte> _p, _f, _t;
 
@@ -25,13 +25,14 @@ namespace BlueForest.Messaging.JsonRpc
         public ReadOnlyMemory<byte> From { get => _f; set => _f = value; }
         public ReadOnlyMemory<byte> To { get => _t; set => _t = value; }
 
-        public IRpcTopic Reverse()
+        public IRpcTopic ReverseInPlace()
         {
             var tmp = _f;
             _f = _t;
             _t = tmp;
             return this;
         }
+
         public bool Equals([AllowNull] IRpcTopic other)
         {
             return (other?.From.Equals(_f) ?? false) && (other?.To.Equals(_t) ?? false) && (other?.Path.Equals(_p) ?? false);
@@ -42,5 +43,6 @@ namespace BlueForest.Messaging.JsonRpc
             return Encoding.UTF8.GetString(this.Assemble().ToArray());
         }
 
+        public abstract IRpcTopic AsSubscribeAny();
     }
 }

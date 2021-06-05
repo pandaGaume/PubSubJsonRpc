@@ -1,8 +1,8 @@
-﻿namespace BlueForest.Messaging.JsonRpc
-{
-    using System;
-    using System.Buffers;
+﻿using System;
+using System.Buffers;
 
+namespace BlueForest.Messaging.JsonRpc
+{
     /// <summary>
     /// An utility class to hold topic parts
     /// </summary>

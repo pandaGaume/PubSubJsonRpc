@@ -14,24 +14,23 @@ namespace BlueForest.Messaging.JsonRpc
     { 
         internal static RequestId Unknown = new RequestId("unknown");
 
-        internal BufferBlock<PUB_SUB_RPC_MESSAGE> _target;
-        internal BufferBlock<PUB_SUB_RPC_MESSAGE> _source;
-        internal IRpcTopic _topic;
+        readonly internal BufferBlock<PUB_SUB_RPC_MESSAGE> _target;
+        readonly internal BufferBlock<PUB_SUB_RPC_MESSAGE> _source;
+        readonly internal IRpcTopic _requestTopic; // used for write request
 
-        public JsonRpcPubSubHandlerBlock(IJsonRpcMessageFormatter formatter, IRpcTopic topic) : this(formatter, topic, new DataflowBlockOptions())
+        public JsonRpcPubSubHandlerBlock(IRpcTopic requestTopic, IJsonRpcMessageFormatter formatter) : this(requestTopic, formatter, new DataflowBlockOptions())
         {
         }
  
-        public JsonRpcPubSubHandlerBlock(IJsonRpcMessageFormatter formatter, IRpcTopic topic, DataflowBlockOptions dataflowBlockOptions) : base(formatter)
+        public JsonRpcPubSubHandlerBlock(IRpcTopic topic, IJsonRpcMessageFormatter formatter, DataflowBlockOptions dataflowBlockOptions) : base(formatter)
         {
-            Requires.NotNull(topic, nameof(topic));
             _target = new BufferBlock<PUB_SUB_RPC_MESSAGE>(dataflowBlockOptions);
             _source = new BufferBlock<PUB_SUB_RPC_MESSAGE>(dataflowBlockOptions);
             _ = _target.Completion.ContinueWith(delegate
             {
                 _source?.Complete();
             }, TaskScheduler.Default);
-            _topic = topic;
+            _requestTopic = topic;
         }
         public override bool CanRead => true;
         public override bool CanWrite => true;
@@ -57,7 +56,6 @@ namespace BlueForest.Messaging.JsonRpc
             var c = content;
 
             RequestId id = default;
-            IRpcTopic topic = _topic;
             try
             {
                 if (c is JsonRpcResult result)
@@ -65,19 +63,11 @@ namespace BlueForest.Messaging.JsonRpc
                     id = result.RequestId;
                     if (_requestIdIndex.TryGetValue(id, out var cache))
                     {
-                        topic = cache.Item2.ReverseInPlace();
-
-                        if (cache.Item1.IsEmpty)
-                        {
-                            c = new JsonRpcError()
-                            {
-                                RequestId = Unknown,
-                                Error = new JsonRpcError.ErrorDetail() { Code = JsonRpcErrorCode.InvalidRequest }
-                            };
-                        }
-                        else
+                        IRpcTopic topic = cache.Item2.ReverseInPlace();
+                        if (!cache.Item1.IsEmpty)
                         {
                             result.RequestId = cache.Item1;
+                            _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, topic));
                         }
                     }
                 }
@@ -86,20 +76,17 @@ namespace BlueForest.Messaging.JsonRpc
                     id = error.RequestId;
                     if (_requestIdIndex.TryGetValue(id, out var cache))
                     {
-                        topic = cache.Item2.ReverseInPlace();
-                        if (cache.Item1.IsEmpty)
-                        {
-                            c = new JsonRpcError()
-                            {
-                                RequestId = Unknown,
-                                Error = new JsonRpcError.ErrorDetail() { Code = JsonRpcErrorCode.InvalidRequest }
-                            };
-                        }
-                        else
+                        IRpcTopic topic = cache.Item2.ReverseInPlace();
+                        if (!cache.Item1.IsEmpty)
                         {
                             error.RequestId = cache.Item1;
+                            _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, topic));
                         }
                     }
+                } 
+                else if (c is JsonRpcRequest requet)
+                {
+                    _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, _requestTopic));
                 }
             }
             finally
@@ -109,7 +96,7 @@ namespace BlueForest.Messaging.JsonRpc
                     // something went wrong internally
                 }
             }
-            _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, topic));
+            
             return new ValueTask();
         }
         protected override ValueTask FlushAsync(CancellationToken cancellationToken) => default;

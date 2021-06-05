@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\DotVision.Motion.V2.Gateway\BlueForest.Geofencing\BlueForest.Geofencing.csproj" />
     <ProjectReference Include="..\..\src\BlueForest.Messaging.JsonRpc\BlueForest.Messaging.JsonRpc.csproj" />
     <ProjectReference Include="..\..\src\mqtt\MqttNet\BlueForest.Messaging.JsonRpc.MqttNet\BlueForest.Messaging.JsonRpc.MqttNet.csproj" />
     <ProjectReference Include="..\Samples.Commons\Samples.Commons.csproj" />

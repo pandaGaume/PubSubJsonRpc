@@ -1,4 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using BlueForest.Geofencing.Api;
+using BlueForest.Messaging.JsonRpc;
+using BlueForest.Messaging.JsonRpc.MQTTnet;
+using Microsoft.Extensions.Configuration;
+using MQTTnet;
+using MQTTnet.Client.Options;
+using MQTTnet.Extensions.ManagedClient;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -38,15 +44,6 @@ namespace Samples.MqttNet.Client
 
             using (var client = await StartClientAsync(await GetJsonConfigAsync(configPath)))
             {
-                while (true)
-                {
-                    foreach (var n in await client.Proxy.Browse())
-                    {
-                        Console.WriteLine(n.DisplayName);
-                    }
-                    await Task.Delay(1000);
-                }
-                //while (true) { await Task.Delay(10000); }
             }
         }
 
@@ -73,13 +70,29 @@ namespace Samples.MqttNet.Client
             return null;
         }
 
-        public static async Task<IotHubClient> StartClientAsync(IConfigurationRoot config)
+        public static async Task<JsonRpcPubSubService> StartClientAsync(IConfigurationRoot config)
         {
             // note : this is an extension located in Microsoft.Extensions.Configuration.Binder 
             var settings = config.Get<IotHubClientSettings>();
-            var client = new IotHubClient();
-            await client.StartClientAsync(settings);
-            return client;
+            // MQTT
+            var optionsBuilder = new MqttClientOptionsBuilder()
+                .WithClientId(settings.Broker.ClientIdTemplate)
+                .WithCredentials(settings.Broker.UserName, settings.Broker.Password)
+                .WithTcpServer(settings.Broker.Host, settings.Broker.Port)
+                .WithCleanSession();
+
+            var options = (settings.Broker.IsSecure ? optionsBuilder.WithTls() : optionsBuilder).Build();
+            var managedOptions = new ManagedMqttClientOptionsBuilder().WithAutoReconnectDelay(TimeSpan.FromSeconds(30)).WithClientOptions(options).Build();
+            var broker = new MqttFactory().CreateManagedMqttClient();
+            await broker.StartAsync(managedOptions);
+
+            // RPC
+            var mqttProxy = new MqttClientNetInterface(broker.InternalClient);
+            var topic = MqttRpcTopic.Parse(settings.Rpc.Topic);
+            var rpc = new JsonRpcPubSubService(mqttProxy, topic, settings.Publish);
+            rpc.Attach(typeof(IGeofencingAPI));
+            rpc.StartListening();
+            return rpc;
         }
     }
 }

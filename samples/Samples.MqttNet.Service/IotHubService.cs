@@ -16,14 +16,15 @@ namespace Samples.MqttNet.Service
     public class IotHubSettings
     {
         public Commons.Mqtt.MqttClientOptions Broker { get; set; }
+        public PubSubOptions Publish { get; set; }
         public JsonRpcSettings Rpc { get; set; }
     }
     public class IotHubService : IDisposable
     {
         IotHubSettings _settings;
-        IotHub _hub;
         IManagedMqttClient _broker;
-        JsonRpc _rpc;
+        IotHub _hub;
+        JsonRpcPubSubService _rpc;
 
         public async ValueTask<JsonRpcPubSubService> StartServiceAsync(IotHubSettings settings)
         {
@@ -45,9 +46,11 @@ namespace Samples.MqttNet.Service
 
             // RPC
             var mqttProxy = new MqttClientNetInterface(_broker.InternalClient);
-            var formatter = new JsonMessageFormatter(Encoding.UTF8);
             var topic = MqttRpcTopic.Parse(_settings.Rpc.Topic);
-            return new JsonRpcPubSubService(mqttProxy, _hub, topic);
+            _rpc = new JsonRpcPubSubService(mqttProxy,topic,settings.Publish);
+            _rpc.AddLocalRpcTarget(_hub);
+            _rpc.StartListening();
+            return _rpc;
         }
 
         public void Dispose()

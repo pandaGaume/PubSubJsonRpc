@@ -15,6 +15,7 @@ namespace Samples.MqttNet.Client
     public class IotHubClientSettings
     {
         public Commons.Mqtt.MqttClientOptions Broker { get; set; }
+        public PubSubOptions Publish { get; set; }
         public JsonRpcSettings Rpc { get; set; }
     }
 
@@ -22,14 +23,13 @@ namespace Samples.MqttNet.Client
     {
         IotHubClientSettings _settings;
         IManagedMqttClient _broker;
-        JsonRpc _rpc;
-        IIotHub _proxy;
+        JsonRpcPubSubService _rpc;
 
-        public async ValueTask StartClientAsync(IotHubClientSettings settings)
+        public async ValueTask<JsonRpcPubSubService> StartClientAsync(IotHubClientSettings settings)
         {
             // API
             _settings = settings;
-            
+
             // MQTT
             var optionsBuilder = new MqttClientOptionsBuilder()
                 .WithClientId(_settings.Broker.ClientIdTemplate)
@@ -40,22 +40,20 @@ namespace Samples.MqttNet.Client
             var options = (_settings.Broker.IsSecure ? optionsBuilder.WithTls() : optionsBuilder).Build();
             var managedOptions = new ManagedMqttClientOptionsBuilder().WithAutoReconnectDelay(TimeSpan.FromSeconds(30)).WithClientOptions(options).Build();
             _broker = new MqttFactory().CreateManagedMqttClient();
-
-            // start the broker
             await _broker.StartAsync(managedOptions);
 
             // RPC
             var mqttProxy = new MqttClientNetInterface(_broker.InternalClient);
-            var formatter = new JsonMessageFormatter(Encoding.UTF8);
-            var topic = MqttRpcTopic.Parse("dotvision/rpc/0/IotHub-Client001/IotHub-001");
-            var handler = new PubSubJsonRpcMessageHandler(mqttProxy, topic, formatter);
-            _rpc  = new StreamJsonRpc.JsonRpc(handler);
-            _proxy = (IIotHub) _rpc.Attach(typeof(IIotHub));
+            var topic = MqttRpcTopic.Parse(_settings.Rpc.Topic);
+            _rpc = new JsonRpcPubSubService(mqttProxy, topic, settings.Publish);
+            _rpc.Attach(typeof(IIotHub));
             _rpc.StartListening();
+            return _rpc;
         }
-        public IIotHub Proxy => _proxy;
         public void Dispose()
         {
+            _rpc?.Dispose();
+            _ = _broker?.StopAsync();
         }
     }
 }

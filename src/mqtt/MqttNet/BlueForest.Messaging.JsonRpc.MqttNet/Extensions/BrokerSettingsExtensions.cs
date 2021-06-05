@@ -2,8 +2,6 @@
 using MQTTnet.Client.Options;
 using MQTTnet.Extensions.ManagedClient;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BlueForest.Messaging.JsonRpc.MqttNet
@@ -19,10 +17,10 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                     var s = settings[index];
                     var optionsBuilder = new MqttClientOptionsBuilder()
                         .WithClientId(s.ClientId)
-                        .WithCredentials(s.Credentials.UserName, s.Credentials.Password)
                         .WithTcpServer(s.Host, s.Port)
                         .WithCleanSession();
 
+                    optionsBuilder = s.Credentials != null && s.Credentials.UserName != null && s.Credentials.Password != null ? optionsBuilder.WithCredentials(s.Credentials.UserName, s.Credentials.Password) : optionsBuilder;
                     var options = (s.IsSecure ?? false ? optionsBuilder.WithTls() : optionsBuilder).Build();
 
                     var c = new MqttFactory().CreateManagedMqttClient();

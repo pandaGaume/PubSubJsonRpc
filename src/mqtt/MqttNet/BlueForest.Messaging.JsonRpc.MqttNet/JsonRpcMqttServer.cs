@@ -53,7 +53,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 
                     var target = new JsonRpcPubSubBlock(notificationTopic);
 
-                    var mqttPublisher = new ActionBlock<IPublishEvent>(e =>
+                    var mqttPublisher = new ActionBlock<IPublishEvent>(async e =>
                     {
                         var builder = new MqttApplicationMessageBuilder().WithPayload(e.Payload.ToArray()).WithTopic(e.Topic.Assemble(Encoding.UTF8));
                         switch (qos)
@@ -64,14 +64,15 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                         }
                         var m = builder.Build();
                         // All MQTT application messages are added to an internal queue and processed once the server is available.
-                        controlClient?.PublishAsync(m);
+                        await controlClient?.PublishAsync(m);
                     });
 
                     target.LinkTo(mqttPublisher, linkOptions);
 
-                    _target = target;
                     target.AddLocalRpcTarget(_delegate);
-                    _target.StartListening();
+                    target.StartListening();
+                    
+                    _target = target;
                     controlClient.ApplicationMessageReceivedHandler = this;
                 }
             }

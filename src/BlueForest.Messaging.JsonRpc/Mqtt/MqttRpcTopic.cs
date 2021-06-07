@@ -11,9 +11,11 @@ namespace BlueForest.Messaging.JsonRpc
         public const byte SEPARATOR = (byte)'/';
         public const byte SINGLE_LEVEL_WILDCHAR = (byte)'+';
         public const byte MULTI_LEVEL_WILDCHAR = (byte)'#';
+        
         public const string SEPARATOR_STR = "/";
         public const string SINGLE_LEVEL_WILDCHAR_STR = "+";
         public const string MULTI_LEVEL_WILDCHAR_STR = "#";
+        public static readonly string NONE_STR = String.Empty;
 
         public static MqttRpcTopic Parse(string str, Encoding encoding = null)
         {
@@ -40,7 +42,11 @@ namespace BlueForest.Messaging.JsonRpc
             return default;
         }
 
-        public MqttRpcTopic(string path, string from, string to, Encoding encoding = null) : base( (encoding??Encoding.UTF8).GetBytes(path), (encoding ?? Encoding.UTF8).GetBytes(from), (encoding ?? Encoding.UTF8).GetBytes(to))
+        public MqttRpcTopic(IRpcTopic other) : base(other)
+        {
+
+        }
+        public MqttRpcTopic(string path, string from = null, string to = null, Encoding encoding = null) : base((encoding ?? Encoding.UTF8).GetBytes(path), (encoding ?? Encoding.UTF8).GetBytes(from ?? string.Empty), (encoding ?? Encoding.UTF8).GetBytes(to ?? string.Empty))
         {
         }
 

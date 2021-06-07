@@ -11,7 +11,15 @@
         public static ReadOnlySequence<byte> Assemble(this IRpcTopic topic)
         {
             var first = new TopicSegment(topic.Path);
-            var last = first.Append(Separator).Append(topic.From).Append(Separator).Append(topic.To);
+            var last = first;
+            if (topic.From.Length != 0)
+            {
+                last = last.Append(Separator).Append(topic.From);
+            }
+            if (topic.To.Length != 0)
+            {
+                last = last.Append(Separator).Append(topic.To);
+            }
             return new ReadOnlySequence<byte>(first, 0, last, last.Memory.Length);
         }
         public static string Assemble(this IRpcTopic topic, Encoding encoding)=>encoding.GetString(Assemble(topic).ToArray());

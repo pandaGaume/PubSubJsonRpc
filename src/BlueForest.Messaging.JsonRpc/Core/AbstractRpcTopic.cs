@@ -9,7 +9,7 @@ namespace BlueForest.Messaging.JsonRpc
     public abstract class AbstractRpcTopic : IRpcTopic, IEquatable<IRpcTopic>
     {
         protected ReadOnlyMemory<byte> _p, _f, _t;
-
+ 
         public AbstractRpcTopic(IRpcTopic other) : this (other.Path, other.From,other.To)
         {
         }

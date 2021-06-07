@@ -36,7 +36,7 @@ namespace BlueForest.Messaging.JsonRpc
         public override bool CanWrite => true;
         protected override async ValueTask<JsonRpcMessage> ReadCoreAsync(CancellationToken cancellationToken)
         {
-            while (await _target.OutputAvailableAsync(cancellationToken))
+            while (await _target.OutputAvailableAsync(cancellationToken).ConfigureAwait(false))
             {
                 var mess = await _target.ReceiveAsync();
 

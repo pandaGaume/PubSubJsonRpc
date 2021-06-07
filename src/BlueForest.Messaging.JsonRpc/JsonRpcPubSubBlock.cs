@@ -58,11 +58,28 @@ namespace BlueForest.Messaging.JsonRpc
             {
                 var w = new ArrayBufferWriter<byte>();
                 formatter.Serialize(w, rpcMsg.Item1);
-                return new PublishEvent()
+                var pe = new PublishEvent()
                 {
                     Payload = new ReadOnlySequence<byte>(w.WrittenMemory),
                     Topic = rpcMsg.Item2
                 };
+                if(rpcMsg.Item1 is JsonRpcRequest request)
+                {
+                    pe.RequestId = request.RequestId;
+                    pe.PublishType = request.IsNotification ? PublishType.Notification : PublishType.Request;
+                }
+                else if (rpcMsg.Item1 is JsonRpcResult result)
+                {
+                    pe.RequestId = result.RequestId;
+                    pe.PublishType = PublishType.Response;
+                }
+                else if (rpcMsg.Item1 is JsonRpcError error)
+                {
+                    pe.RequestId = error.RequestId;
+                    pe.PublishType = PublishType.Error;
+                }
+
+                return pe;
             });
 
             // link the block, filtering message.
@@ -79,6 +96,8 @@ namespace BlueForest.Messaging.JsonRpc
             // Configure Json RPC
             InitializeRpc();
         }
+
+        public ITargetBlock<PUB_SUB_RPC_MESSAGE> LocalTarget => _handler;
 
         // used for server side
         public void AddLocalRpcTarget(object target) => _rpc?.AddLocalRpcTarget(target);

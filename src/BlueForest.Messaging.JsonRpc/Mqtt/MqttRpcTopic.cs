@@ -19,38 +19,34 @@ namespace BlueForest.Messaging.JsonRpc
 
         public static MqttRpcTopic Parse(string str, Encoding encoding = null)
         {
+            var parts = str.Split('/');
+            var l = parts.Length;
+            
+            MqttRpcTopic t = new MqttRpcTopic();
             var e = encoding ?? Encoding.UTF8;
-            return Parse(e.GetBytes(str)); 
+            if (l > 1) t.Path = e.GetBytes(string.Join('/',parts[0],parts[1]));
+            if (l > 2) t.Channel = e.GetBytes(parts[2]);
+            if (l > 3) t.From = e.GetBytes(parts[3]);
+            if (l > 4) t.To = e.GetBytes(parts[4]);
+
+            return t;
         }
 
-        public static MqttRpcTopic Parse(ReadOnlyMemory<byte> mem)
+
+
+        public MqttRpcTopic() : base()
         {
-            var span = mem.Span;
-            var i = span.LastIndexOf(SEPARATOR);
-            if( i > 0)
-            {
-                var to = mem[(i+1)..];
-                span = span.Slice(0,i);
-                var j = span.LastIndexOf(SEPARATOR);
-                if( j > 0)
-                {
-                    var from = mem[(j+1)..i];
-                    var path = mem.Slice(0, j);
-                    return new MqttRpcTopic(path, from, to);
-                }
-            }
-            return default;
-        }
 
+        }
         public MqttRpcTopic(IRpcTopic other) : base(other)
         {
 
         }
-        public MqttRpcTopic(string path, string from = null, string to = null, Encoding encoding = null) : base((encoding ?? Encoding.UTF8).GetBytes(path), (encoding ?? Encoding.UTF8).GetBytes(from ?? string.Empty), (encoding ?? Encoding.UTF8).GetBytes(to ?? string.Empty))
+        public MqttRpcTopic( string path, string channel, string from, string to, Encoding encoding = null) : this((encoding ?? Encoding.UTF8).GetBytes(path), (encoding ?? Encoding.UTF8).GetBytes(channel), (encoding ?? Encoding.UTF8).GetBytes(from ?? string.Empty), (encoding ?? Encoding.UTF8).GetBytes(to ?? string.Empty))
         {
         }
 
-        public MqttRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to) : base(path, from, to)
+        public MqttRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> channel, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to) : base(path, channel, from, to)
         {
         }
     }

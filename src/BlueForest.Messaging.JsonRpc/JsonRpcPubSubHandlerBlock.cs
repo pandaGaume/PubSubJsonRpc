@@ -16,13 +16,13 @@ namespace BlueForest.Messaging.JsonRpc
 
         readonly internal BufferBlock<PUB_SUB_RPC_MESSAGE> _target;
         readonly internal BufferBlock<PUB_SUB_RPC_MESSAGE> _source;
-        readonly internal IRpcTopic _requestTopic; // used for write request
+        internal JsonRpcPubSubTopics _topics;
 
-        public JsonRpcPubSubHandlerBlock(IRpcTopic requestTopic, IJsonRpcMessageFormatter formatter) : this(requestTopic, formatter, new DataflowBlockOptions())
+        public JsonRpcPubSubHandlerBlock(JsonRpcPubSubTopics topics, IJsonRpcMessageFormatter formatter) : this(topics, formatter, new DataflowBlockOptions())
         {
         }
  
-        public JsonRpcPubSubHandlerBlock(IRpcTopic topic, IJsonRpcMessageFormatter formatter, DataflowBlockOptions dataflowBlockOptions) : base(formatter)
+        public JsonRpcPubSubHandlerBlock(JsonRpcPubSubTopics topics, IJsonRpcMessageFormatter formatter, DataflowBlockOptions dataflowBlockOptions) : base(formatter)
         {
             _target = new BufferBlock<PUB_SUB_RPC_MESSAGE>(dataflowBlockOptions);
             _source = new BufferBlock<PUB_SUB_RPC_MESSAGE>(dataflowBlockOptions);
@@ -30,8 +30,9 @@ namespace BlueForest.Messaging.JsonRpc
             {
                 _source?.Complete();
             }, TaskScheduler.Default);
-            _requestTopic = topic;
+            _topics = topics;
         }
+
         public override bool CanRead => true;
         public override bool CanWrite => true;
         protected override async ValueTask<JsonRpcMessage> ReadCoreAsync(CancellationToken cancellationToken)
@@ -64,6 +65,7 @@ namespace BlueForest.Messaging.JsonRpc
                     if (_requestIdIndex.TryGetValue(id, out var cache))
                     {
                         IRpcTopic topic = cache.Item2.ReverseInPlace();
+                        topic.Channel = _topics.Response.Channel;
                         if (!cache.Item1.IsEmpty)
                         {
                             result.RequestId = cache.Item1;
@@ -77,6 +79,7 @@ namespace BlueForest.Messaging.JsonRpc
                     if (_requestIdIndex.TryGetValue(id, out var cache))
                     {
                         IRpcTopic topic = cache.Item2.ReverseInPlace();
+                        topic.Channel = _topics.Response.Channel;
                         if (!cache.Item1.IsEmpty)
                         {
                             error.RequestId = cache.Item1;
@@ -84,9 +87,9 @@ namespace BlueForest.Messaging.JsonRpc
                         }
                     }
                 } 
-                else if (c is JsonRpcRequest requet)
+                else if (c is JsonRpcRequest request)
                 {
-                    _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, _requestTopic));
+                    _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, request.IsNotification?_topics.Notification : _topics.Request));
                 }
             }
             finally

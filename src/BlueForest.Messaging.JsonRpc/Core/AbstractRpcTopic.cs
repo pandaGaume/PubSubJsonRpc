@@ -8,19 +8,22 @@ namespace BlueForest.Messaging.JsonRpc
 
     public abstract class AbstractRpcTopic : IRpcTopic, IEquatable<IRpcTopic>
     {
-        protected ReadOnlyMemory<byte> _p, _f, _t;
- 
-        public AbstractRpcTopic(IRpcTopic other) : this (other.Path, other.From,other.To)
+        protected ReadOnlyMemory<byte> _p, _c, _f, _t;
+
+        public AbstractRpcTopic() { }
+        public AbstractRpcTopic(IRpcTopic other) : this(other.Channel, other.Path, other.From, other.To)
         {
         }
 
-        public AbstractRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to)
+        public AbstractRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> channel, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to)
         {
             _p = path;
+            _c = channel;
             _f = from;
             _t = to;
         }
 
+        public ReadOnlyMemory<byte> Channel { get => _c; set => _c = value; }
         public ReadOnlyMemory<byte> Path { get => _p; set => _p = value; }
         public ReadOnlyMemory<byte> From { get => _f; set => _f = value;  }
         public ReadOnlyMemory<byte> To { get => _t; set => _t = value; }
@@ -35,7 +38,7 @@ namespace BlueForest.Messaging.JsonRpc
 
         public bool Equals([AllowNull] IRpcTopic other)
         {
-            return (other?.From.Equals(_f) ?? false) && (other?.To.Equals(_t) ?? false) && (other?.Path.Equals(_p) ?? false);
+            return (other?.Channel.Equals(_c) ?? false) && (other?.From.Equals(_f) ?? false) && (other?.To.Equals(_t) ?? false) && (other?.Path.Equals(_p) ?? false);
         }
 
         public override string ToString()

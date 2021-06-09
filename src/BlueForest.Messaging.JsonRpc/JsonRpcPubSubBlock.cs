@@ -11,6 +11,7 @@ namespace BlueForest.Messaging.JsonRpc
 {
     using PUB_SUB_RPC_MESSAGE = Tuple<JsonRpcMessage, IRpcTopic>;
 
+
     public class JsonRpcPubSubBlock : IJsonRpcPubSub, IDisposable
     {
         internal StreamJsonRpc.JsonRpc _rpc;
@@ -20,11 +21,10 @@ namespace BlueForest.Messaging.JsonRpc
 
         private bool disposed;
 
-        public JsonRpcPubSubBlock(IRpcTopic topic, IJsonRpcMessageFormatter formatter = null)
+        public JsonRpcPubSubBlock(JsonRpcPubSubTopics topics, IJsonRpcMessageFormatter formatter = null)
         {
             // Configure the pipeline
-            // ----------------------
-            var largeBufferOptions = new ExecutionDataflowBlockOptions() { BoundedCapacity = 60000 };
+            var smallBufferOptions = new ExecutionDataflowBlockOptions() { BoundedCapacity = 1000 };
             
             // make sure our complete call gets propagated throughout the whole pipeline
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
@@ -48,10 +48,10 @@ namespace BlueForest.Messaging.JsonRpc
                 {
                 }
                 return new Tuple<JsonRpcMessage, IRpcTopic>(rpcMsg, publishEvent.Topic);
-            }, largeBufferOptions);
+            }, smallBufferOptions);
 
             // the rpc handler
-            _handler = new JsonRpcPubSubHandlerBlock(topic, formatter);
+            _handler = new JsonRpcPubSubHandlerBlock(topics, formatter);
 
             // the encoder
             var encoderBlock = new TransformBlock<PUB_SUB_RPC_MESSAGE, IPublishEvent>(rpcMsg =>

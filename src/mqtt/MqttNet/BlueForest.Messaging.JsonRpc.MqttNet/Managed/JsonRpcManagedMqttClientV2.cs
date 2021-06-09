@@ -6,16 +6,19 @@ using MQTTnet.Client.Disconnecting;
 using MQTTnet.Client.Publishing;
 using MQTTnet.Client.Receiving;
 using MQTTnet.Client.Subscribing;
-using MQTTnet.Client.Unsubscribing;
 using MQTTnet.Protocol;
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
-    public class JsonRpcManagedMqttClient : IMqttClientConnectedHandler, IMqttClientDisconnectedHandler, IMqttApplicationMessageReceivedHandler
+    public class JsonRpcManagedMqttClientV2 : IMqttClientConnectedHandler, IMqttClientDisconnectedHandler, IMqttApplicationMessageReceivedHandler
     {
         public static TimeSpan AutoReconnectMaxDelayDefault = TimeSpan.FromSeconds(30);
 
@@ -25,34 +28,91 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         SemaphoreSlim _connectingLock;
         CancellationTokenSource _stoppedSource;
         MqttClientAuthenticateResult _lastConnectionResult;
-        
 
-        event EventHandler<MqttClientConnectedEventArgs> _onConnected;
-        event EventHandler<MqttClientDisconnectedEventArgs> _onDisconnected;
-        event AsyncEventHandler<MqttApplicationMessageReceivedEventArgs> _onMessageReceived;
+        ITargetBlock<MqttApplicationMessageReceivedEventArgs> _decoder;
+        ITargetBlock<IPublishEvent> _dispatcher;
 
-        public JsonRpcManagedMqttClient()
+        ConcurrentDictionary<Guid, JsonRpcSubscription> _subscriptions;
+
+
+        event AsyncEventHandler<MqttClientConnectedEventArgs> _onConnected;
+
+
+        public JsonRpcManagedMqttClientV2()
         {
             _runLock = new SemaphoreSlim(1);
             _connectingLock = new SemaphoreSlim(1);
+            _subscriptions = new ConcurrentDictionary<Guid, JsonRpcSubscription>();
+
+            // Configure the pipeline
+            var largeBufferOptions = new ExecutionDataflowBlockOptions() { BoundedCapacity = 10000 };
+
+            var decoder = new TransformBlock<MqttApplicationMessageReceivedEventArgs,IPublishEvent>((eventArgs) => {
+                var e = new PublishEvent()
+                {
+                    Payload = new ReadOnlySequence<byte>(eventArgs.ApplicationMessage.Payload),
+                    Topic = MqttRpcTopic.Parse(eventArgs.ApplicationMessage.Topic)
+                };
+                var payloadStr = Encoding.UTF8.GetString(e.Payload.ToArray());
+                Console.WriteLine(payloadStr);
+                return e;
+            }, largeBufferOptions);
+
+            var dispatcher = new ActionBlock<IPublishEvent>(async (e) =>
+            {
+                var subscriptions = _subscriptions.Values.ToArray();
+                foreach(var s in subscriptions.Match(e.Topic))
+                {
+                    await s.Target.SendAsync(e);
+                }
+            }, largeBufferOptions);
+            
+            var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
+
+            decoder.LinkTo(dispatcher, linkOptions);
+            _decoder = decoder;
+            _dispatcher = dispatcher;
+
             var factory = new MqttFactory();
             _client = factory.CreateMqttClient();
             _client.ConnectedHandler = this;
             _client.ApplicationMessageReceivedHandler = this;
         }
 
-        public async Task<MqttClientSubscribeResult> SubscribeAsync(string topic, MqttQualityOfServiceLevel qos, CancellationToken cancellationToken = default)
-        {
-            var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(qos).WithTopic(topic);
-            var optionsBuilder = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(filterBuilder.Build());
-            return await _client.SubscribeAsync(optionsBuilder.Build(), cancellationToken);
-        }
 
-        public async Task<MqttClientUnsubscribeResult> UnsubscribeAsync(string topic, CancellationToken cancellationToken = default)
+
+        public async Task<JsonRpcSubscribeResult> SubscribeAsync(ITargetBlock<IPublishEvent> target, IRpcTopic topic, MqttQualityOfServiceLevel qos, Encoding encoding = null, CancellationToken cancellationToken = default)
         {
-            var filterBuilder = new MqttTopicFilterBuilder().WithTopic(topic);
-            var optionsBuilder = new MqttClientUnsubscribeOptionsBuilder().WithTopicFilter(filterBuilder.Build());
-            return await _client.UnsubscribeAsync(optionsBuilder.Build(), cancellationToken);
+            encoding = encoding ?? Encoding.UTF8;
+            var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(qos).WithTopic(encoding.GetString(topic.Assemble().ToArray()));
+            var optionsBuilder = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(filterBuilder.Build());
+            MqttClientSubscribeResult results = null;
+            try
+            {
+                results = await _client.SubscribeAsync(optionsBuilder.Build(), cancellationToken);
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            var res = results?.Items[0];
+            var guid = Guid.Empty;
+            if (res.ResultCode < MqttClientSubscribeResultCode.UnspecifiedError)
+            {
+                guid = Guid.NewGuid();
+                int retry = 3;
+                while(_subscriptions.ContainsKey(guid) && --retry != 0)
+                {
+                    guid = Guid.NewGuid();
+                }
+                var sub = new JsonRpcSubscription(guid, topic, target);
+                if (!_subscriptions.TryAdd(guid, sub))
+                {
+                    // something went wrong - should NEVER append while the keys are ALWAYS unique
+                }
+            }
+            return new JsonRpcSubscribeResult(res.ResultCode, guid);
         }
 
         public Task<MqttClientPublishResult> PublishAsync(MqttApplicationMessage mess) => _client.PublishAsync(mess);
@@ -63,52 +123,34 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             return await _client.PublishAsync(mess);
         }
 
-        public event EventHandler<MqttClientConnectedEventArgs> OnConnected
+        public event AsyncEventHandler<MqttClientConnectedEventArgs> OnConnected
         {
             add 
             { 
                 _onConnected += value;
                 if(_client.IsConnected)
                 {
-                    value.Invoke(this, new MqttClientConnectedEventArgs(_lastConnectionResult));
+                    _ = value.InvokeAsync(this, new MqttClientConnectedEventArgs(_lastConnectionResult));
                 }
             }
             remove { _onConnected -= value; }
         }
 
-        public event EventHandler<MqttClientDisconnectedEventArgs> OnDisconnected
-        {
-            add { _onDisconnected += value; }
-            remove { _onDisconnected -= value; }
-        }
-
-        public event AsyncEventHandler<MqttApplicationMessageReceivedEventArgs> OnMessageReceived
-        {
-            add { _onMessageReceived += value; }
-            remove { _onMessageReceived -= value; }
-        }
-
-        public Task HandleConnectedAsync(MqttClientConnectedEventArgs eventArgs)
+        public async Task HandleConnectedAsync(MqttClientConnectedEventArgs eventArgs)
         {
             _client.ConnectedHandler = null;
             _client.DisconnectedHandler = this;
-            _onConnected?.Invoke(this, eventArgs);
-            return Task.CompletedTask;
+            await _onConnected?.InvokeAsync(this, eventArgs);
         }
 
-        public Task HandleDisconnectedAsync(MqttClientDisconnectedEventArgs eventArgs)
+        public async Task HandleDisconnectedAsync(MqttClientDisconnectedEventArgs eventArgs)
         {
             _client.DisconnectedHandler = null;
             _client.ConnectedHandler = this;
-            _onDisconnected?.Invoke(this, eventArgs);
-            _ = Task.Run(async () =>
-            {
-                await TryConnectAsync(CancellationToken.None);
-            });
-            return Task.CompletedTask;
+            await TryConnectAsync(CancellationToken.None);
         }
 
-        public async Task<JsonRpcManagedMqttClient> StartAsync(ManagedBrokerSettings settings, CancellationToken cancellationToken = default)
+        public async Task<JsonRpcManagedMqttClientV2> StartAsync(ManagedBrokerSettings settings, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -128,7 +170,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             return this;
         }
 
-        public async Task<JsonRpcManagedMqttClient> StopAsync(CancellationToken cancellationToken = default)
+        public async Task<JsonRpcManagedMqttClientV2> StopAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -206,7 +248,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 
         public async Task HandleApplicationMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs eventArgs)
         {
-            await _onMessageReceived?.InvokeAsync(this, eventArgs);
+            await _decoder.SendAsync(eventArgs);
         }
     }
 }

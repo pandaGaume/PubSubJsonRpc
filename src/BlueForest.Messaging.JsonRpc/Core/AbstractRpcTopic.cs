@@ -8,22 +8,24 @@ namespace BlueForest.Messaging.JsonRpc
 
     public abstract class AbstractRpcTopic : IRpcTopic, IEquatable<IRpcTopic>
     {
-        protected ReadOnlyMemory<byte> _p, _c, _f, _t;
+        protected ReadOnlyMemory<byte> _p, _c, _n, _f, _t;
 
         public AbstractRpcTopic() { }
-        public AbstractRpcTopic(IRpcTopic other) : this(other.Channel, other.Path, other.From, other.To)
+        public AbstractRpcTopic(IRpcTopic other) : this( other.Path, other.Channel, other.Namespace, other.From, other.To)
         {
         }
 
-        public AbstractRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> channel, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to)
+        public AbstractRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> channel, ReadOnlyMemory<byte> @namespace, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to)
         {
             _p = path;
             _c = channel;
+            _n = @namespace;
             _f = from;
             _t = to;
         }
 
         public ReadOnlyMemory<byte> Channel { get => _c; set => _c = value; }
+        public ReadOnlyMemory<byte> Namespace { get => _n; set => _n = value; }
         public ReadOnlyMemory<byte> Path { get => _p; set => _p = value; }
         public ReadOnlyMemory<byte> From { get => _f; set => _f = value;  }
         public ReadOnlyMemory<byte> To { get => _t; set => _t = value; }

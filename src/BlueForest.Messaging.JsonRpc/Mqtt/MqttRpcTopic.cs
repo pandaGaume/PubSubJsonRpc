@@ -24,10 +24,11 @@ namespace BlueForest.Messaging.JsonRpc
             
             MqttRpcTopic t = new MqttRpcTopic();
             var e = encoding ?? Encoding.UTF8;
-            if (l > 1) t.Path = e.GetBytes(string.Join('/',parts[0],parts[1]));
+            if (l > 1) t.Path = e.GetBytes(string.Join('/',parts[0],parts[1])); // <path>/<steam>
             if (l > 2) t.Channel = e.GetBytes(parts[2]);
-            if (l > 3) t.From = e.GetBytes(parts[3]);
-            if (l > 4) t.To = e.GetBytes(parts[4]);
+            if (l > 3) t.Namespace = e.GetBytes(parts[3]);
+            if (l > 4) t.From = e.GetBytes(parts[4]);
+            if (l > 5) t.To = e.GetBytes(parts[5]);
 
             return t;
         }
@@ -42,11 +43,11 @@ namespace BlueForest.Messaging.JsonRpc
         {
 
         }
-        public MqttRpcTopic( string path, string channel, string from, string to, Encoding encoding = null) : this((encoding ?? Encoding.UTF8).GetBytes(path), (encoding ?? Encoding.UTF8).GetBytes(channel), (encoding ?? Encoding.UTF8).GetBytes(from ?? string.Empty), (encoding ?? Encoding.UTF8).GetBytes(to ?? string.Empty))
+        public MqttRpcTopic( string path, string channel, string @namespace, string from, string to, Encoding encoding = null) : this((encoding ?? Encoding.UTF8).GetBytes(path), (encoding ?? Encoding.UTF8).GetBytes(channel), (encoding ?? Encoding.UTF8).GetBytes(@namespace), (encoding ?? Encoding.UTF8).GetBytes(from ?? string.Empty), (encoding ?? Encoding.UTF8).GetBytes(to ?? string.Empty))
         {
         }
 
-        public MqttRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> channel, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to) : base(path, channel, from, to)
+        public MqttRpcTopic(ReadOnlyMemory<byte> path, ReadOnlyMemory<byte> channel, ReadOnlyMemory<byte> @namespace, ReadOnlyMemory<byte> from, ReadOnlyMemory<byte> to) : base(path, channel, @namespace, from, to)
         {
         }
     }

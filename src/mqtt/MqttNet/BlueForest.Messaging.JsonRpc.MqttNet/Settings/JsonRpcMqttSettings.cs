@@ -2,6 +2,7 @@
 {
     public class JsonRpcMqttSettings
     {
+        public string Namespace { get; set; }
         public string Name { get; set; }
         public ManagedBrokerSettings[] Clients { get; set; }
         public BrokerSession[] Sessions { get; set; }

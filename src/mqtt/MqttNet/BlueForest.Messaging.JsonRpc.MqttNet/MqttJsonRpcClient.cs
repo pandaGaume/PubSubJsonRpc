@@ -5,7 +5,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
     public class MqttJsonRpcClient<T> : MqttJsonRpcServiceV2<T>
         where T:class
     {
-        public MqttJsonRpcClient(string name) : base(name)
+        public MqttJsonRpcClient(string @namespace, string name) : base(@namespace, name)
         {
         }
 
@@ -17,9 +17,9 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                 var route = controlSession.Routes[routeIndex];
                 var channels = controlSession.Channels ?? BrokerChannels.Default;
 
-                var requestTopic = new MqttRpcTopic(route.Path, channels.Request ?? BrokerChannels.Default.Request, Name, route.To);
-                var responseTopic = new MqttRpcTopic(route.Path, channels.Response ?? BrokerChannels.Default.Response, route.To, Name);
-                var notificationTopic = new MqttRpcTopic(route.Path, channels.Notification ?? BrokerChannels.Default.Notification, route.To, MqttRpcTopic.MULTI_LEVEL_WILDCHAR_STR);
+                var requestTopic = new MqttRpcTopic(route.Path, channels.Request ?? BrokerChannels.Default.Request, Namespace, Name, route.To);
+                var responseTopic = new MqttRpcTopic(route.Path, channels.Response ?? BrokerChannels.Default.Response, Namespace, route.To, Name);
+                var notificationTopic = new MqttRpcTopic(route.Path, channels.Notification ?? BrokerChannels.Default.Notification, Namespace, route.To, MqttRpcTopic.MULTI_LEVEL_WILDCHAR_STR);
                 var topics = new JsonRpcPubSubTopics(requestTopic, responseTopic, notificationTopic);
                 return topics;
             }

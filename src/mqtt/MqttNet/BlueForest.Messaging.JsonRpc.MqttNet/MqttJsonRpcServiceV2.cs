@@ -17,17 +17,20 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
     {
         public static int DefaultQos = (int)MqttQualityOfServiceLevel.AtLeastOnce;
 
+        internal string _namespace;
         internal string _name;
         internal T _delegate;
         internal JsonRpcPubSubBlock _target;
         internal JsonRpcPubSubTopics _topics;
         private bool disposedValue;
 
-        public MqttJsonRpcServiceV2(string name)
+        public MqttJsonRpcServiceV2(string @namespace, string name)
         {
+            _namespace = @namespace ?? throw new ArgumentNullException(nameof(@namespace));
             _name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
+        public string Namespace => _namespace;
         public string Name => _name;
         public ITargetBlock<IPublishEvent> Target => _target;
         public T Delegate => _delegate;

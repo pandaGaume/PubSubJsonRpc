@@ -11,7 +11,7 @@
         public static ReadOnlySequence<byte> Assemble(this IRpcTopic topic)
         {
             var first = new TopicSegment(topic.Path);
-            var last = first.Append(Separator).Append(topic.Channel);
+            var last = first.Append(Separator).Append(topic.Channel).Append(Separator).Append(topic.Namespace);
             if (topic.From.Length != 0)
             {
                 last = last.Append(Separator).Append(topic.From);

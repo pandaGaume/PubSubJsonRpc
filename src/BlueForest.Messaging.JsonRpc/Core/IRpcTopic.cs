@@ -6,6 +6,7 @@ namespace BlueForest.Messaging.JsonRpc
     {
         ReadOnlyMemory<byte> Path { get; set; }
         ReadOnlyMemory<byte> Channel { get; set; }
+        ReadOnlyMemory<byte> Namespace { get; set; }
         ReadOnlyMemory<byte> From { get; set; }
         ReadOnlyMemory<byte> To { get; set; }
         IRpcTopic ReverseInPlace();

@@ -53,8 +53,10 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                     Payload = new ReadOnlySequence<byte>(eventArgs.ApplicationMessage.Payload),
                     Topic = MqttRpcTopic.Parse(eventArgs.ApplicationMessage.Topic)
                 };
+#if DEBUG
                 var payloadStr = Encoding.UTF8.GetString(e.Payload.ToArray());
-                Console.WriteLine(payloadStr);
+                Console.WriteLine($"Receive : {e.Topic} - {payloadStr}");
+#endif
                 return e;
             }, largeBufferOptions);
 
@@ -120,6 +122,11 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         {
             var builder = new MqttApplicationMessageBuilder().WithPayload(payload.ToArray()).WithTopic(topic).WithQualityOfServiceLevel(qos);
             var mess = builder.Build();
+#if DEBUG
+            var payloadStr = Encoding.UTF8.GetString(payload.ToArray());
+            Console.WriteLine($"send : {topic} - {payloadStr}");
+#endif
+
             return await _client.PublishAsync(mess);
         }
 

@@ -11,9 +11,9 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 
         public override JsonRpcPubSubTopics GetTopics(JsonRpcMqttSettings settings, int routeIndex)
         {
-            if (settings.ProcedureCallSession.HasValue)
+            if (settings.MainSession.HasValue)
             {
-                var controlSession = settings.Sessions[settings.ProcedureCallSession.Value];
+                var controlSession = settings.Sessions[settings.MainSession.Value];
                 var route = controlSession.Routes[routeIndex];
                 var channels = controlSession.Channels ?? BrokerChannels.Default;
 

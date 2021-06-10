@@ -34,54 +34,53 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         public string Name => _name;
         public ITargetBlock<IPublishEvent> Target => _target;
         public T Delegate => _delegate;
-        public async Task StartAsync(JsonRpcMqttSettings settings, int routeIndex = 0, CancellationToken cancellationToken = default)
+        public async Task StartAsync(JsonRpcMqttSettings settings, int? sessionIndex = null,int? routeIndex = null, CancellationToken cancellationToken = default)
         {
             // make sure our complete call gets propagated throughout the whole pipeline
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
             var brokerSettings = settings.Clients;
-            if (settings.ProcedureCallSession.HasValue)
+            sessionIndex = sessionIndex ?? settings.MainSession ?? 0;
+            var controlSession = settings.Sessions[(int)sessionIndex];
+            var controlClient = await GetMqttClientAsync(brokerSettings[controlSession.Client], cancellationToken);
+            if (controlClient != null)
             {
-                var controlSession = settings.Sessions[settings.ProcedureCallSession.Value];
-                var controlClient = await GetMqttClientAsync(brokerSettings[controlSession.Client], cancellationToken);
-                if (controlClient != null)
+                routeIndex = routeIndex?? settings.MainRoute ?? 0;
+                _topics = GetTopics(settings, (int)routeIndex);
+
+                var overallQos = (MqttQualityOfServiceLevel)Math.Min(controlSession.Routes[0].Qos ?? DefaultQos, (int)MqttQualityOfServiceLevel.ExactlyOnce);
+
+                var target = new JsonRpcPubSubBlock(_topics);
+
+                var mqttPublisher = new ActionBlock<IPublishEvent>(async e =>
                 {
-                    _topics = GetTopics(settings, routeIndex);
-
-                    var overallQos = (MqttQualityOfServiceLevel)Math.Min(controlSession.Routes[0].Qos ?? DefaultQos, (int)MqttQualityOfServiceLevel.ExactlyOnce);
-
- 
-                    var target = new JsonRpcPubSubBlock(_topics);
-
-                    var mqttPublisher = new ActionBlock<IPublishEvent>(async e =>
+                    try
                     {
-                        try
-                        {
-                            var topic = e.Topic.Assemble(Encoding.UTF8);
-                            var result = await controlClient.PublishAsync(topic, e.Payload, overallQos);
-                            if (result.ReasonCode != MqttClientPublishReasonCode.Success)
-                            {
-                                 ReturnLocalError(e);
-                            }
-                        }
-                        catch
+                        var topic = e.Topic.Assemble(Encoding.UTF8);
+                        var result = await controlClient.PublishAsync(topic, e.Payload, overallQos);
+                        if (result.ReasonCode != MqttClientPublishReasonCode.Success)
                         {
                             ReturnLocalError(e);
                         }
-                    });
+                    }
+                    catch
+                    {
+                        ReturnLocalError(e);
+                    }
+                });
 
-                    target.LinkTo(mqttPublisher, linkOptions);
-                    _target = target;
+                target.LinkTo(mqttPublisher, linkOptions);
+                _target = target;
 
-                    controlClient.OnConnected += async (o, args) => {
-                        foreach (var s in Subscriptions())
-                        {
-                            var result = await controlClient.SubscribeAsync(target, s, overallQos, null, cancellationToken);
-                        }
-                    };
+                controlClient.OnConnected += async (o, args) =>
+                {
+                    foreach (var s in Subscriptions())
+                    {
+                        var result = await controlClient.SubscribeAsync(target, s, overallQos, null, cancellationToken);
+                    }
+                };
 
-                    OnStarted();
-                }
+                OnStarted();
             }
         }
         // local loop  response to local rpc client

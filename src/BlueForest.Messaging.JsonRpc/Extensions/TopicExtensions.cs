@@ -27,7 +27,7 @@
         public static bool Match(this IRpcTopic topic, IRpcTopic other)
         {
             if (!topic.Channel.Span.SequenceEqual(other.Channel.Span)) return false;
-
+            
             if (!topic.To.IsEmpty)
             {
                 var span = topic.To.Span;
@@ -46,6 +46,7 @@
                 }
             }
 
+            if (!topic.Namespace.Span.SequenceEqual(other.Namespace.Span)) return false;
             if (!topic.Path.Span.SequenceEqual(other.Path.Span)) return false;
 
             return true;

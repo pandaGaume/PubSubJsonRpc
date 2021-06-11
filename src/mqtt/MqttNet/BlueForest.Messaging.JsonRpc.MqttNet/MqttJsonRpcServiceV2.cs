@@ -1,9 +1,7 @@
-﻿using MQTTnet;
-using MQTTnet.Client.Publishing;
+﻿using MQTTnet.Client.Publishing;
 using MQTTnet.Protocol;
 using StreamJsonRpc.Protocol;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -17,38 +15,35 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
     {
         public static int DefaultQos = (int)MqttQualityOfServiceLevel.AtLeastOnce;
 
-        internal string _namespace;
-        internal string _name;
+
+        MqttJsonRpcOptions _options; 
         internal T _delegate;
         internal JsonRpcPubSubBlock _target;
         internal JsonRpcPubSubTopics _topics;
         private bool disposedValue;
 
-        public MqttJsonRpcServiceV2(string @namespace, string name)
-        {
-            _namespace = @namespace ?? throw new ArgumentNullException(nameof(@namespace));
-            _name = name ?? throw new ArgumentNullException(nameof(name));
-        }
-
-        public string Namespace => _namespace;
-        public string Name => _name;
+        public string Namespace => _options.Route.Namespace;
+        public string Name => _options.Session.Name;
         public ITargetBlock<IPublishEvent> Target => _target;
         public T Delegate => _delegate;
-        public async Task StartAsync(JsonRpcMqttSettings settings, int? sessionIndex = null,int? routeIndex = null, CancellationToken cancellationToken = default)
+        public JsonRpcManagedMqttClient Broker => _options.MqttClient;
+        public BrokerSession Session => _options.Session;
+        public BrokerRoute Route => _options.Route;
+
+        public async Task StartAsync(MqttJsonRpcOptions options)
         {
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+
             // make sure our complete call gets propagated throughout the whole pipeline
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
-            var brokerSettings = settings.Clients;
-            sessionIndex = sessionIndex ?? settings.MainSession ?? 0;
-            var controlSession = settings.Sessions[(int)sessionIndex];
-            var controlClient = await GetMqttClientAsync(brokerSettings[controlSession.Client], cancellationToken);
+            var controlSession = Session;
+            var controlClient = Broker;
             if (controlClient != null)
             {
-                routeIndex = routeIndex?? settings.MainRoute ?? 0;
-                _topics = GetTopics(settings, (int)routeIndex);
+                _topics = GetTopics(_options);
 
-                var overallQos = (MqttQualityOfServiceLevel)Math.Min(controlSession.Routes[0].Qos ?? DefaultQos, (int)MqttQualityOfServiceLevel.ExactlyOnce);
+                var overallQos = (MqttQualityOfServiceLevel)Math.Min(Route.Qos ?? DefaultQos, (int)MqttQualityOfServiceLevel.ExactlyOnce);
 
                 var target = new JsonRpcPubSubBlock(_topics);
 
@@ -76,13 +71,15 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                 {
                     foreach (var s in Subscriptions())
                     {
-                        var result = await controlClient.SubscribeAsync(target, s, overallQos, null, cancellationToken);
+                        var result = await controlClient.SubscribeAsync(target, s, overallQos);
                     }
                 };
 
                 OnStarted();
             }
+            await options.MqttClient.StartAsync();
         }
+
         // local loop  response to local rpc client
         private void ReturnLocalError(IPublishEvent e, JsonRpcError.ErrorDetail detail = null)
         {
@@ -93,12 +90,6 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             };
             var mess = new Tuple<JsonRpcMessage, IRpcTopic>(error, new MqttRpcTopic(e.Topic).ReverseInPlace());
             _target.LocalTarget.Post(mess);
-        }
-
-        internal async ValueTask<JsonRpcManagedMqttClientV2> GetMqttClientAsync(ManagedBrokerSettings settings, CancellationToken token )
-        {
-            var c = new JsonRpcManagedMqttClientV2();
-            return await c.StartAsync(settings, token);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -117,7 +108,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-        public abstract JsonRpcPubSubTopics GetTopics(JsonRpcMqttSettings settings, int routeIndex);
+        public abstract JsonRpcPubSubTopics GetTopics(MqttJsonRpcOptions options);
         public abstract IEnumerable<IRpcTopic> Subscriptions();
         public abstract void OnStarted();
     }

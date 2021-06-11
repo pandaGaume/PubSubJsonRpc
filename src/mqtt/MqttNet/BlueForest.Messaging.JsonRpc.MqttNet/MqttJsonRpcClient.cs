@@ -5,25 +5,22 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
     public class MqttJsonRpcClient<T> : MqttJsonRpcServiceV2<T>
         where T:class
     {
-        public MqttJsonRpcClient(string @namespace, string name) : base(@namespace, name)
-        {
-        }
 
-        public override JsonRpcPubSubTopics GetTopics(JsonRpcMqttSettings settings, int routeIndex)
+        public override JsonRpcPubSubTopics GetTopics(MqttJsonRpcOptions options)
         {
-            if (settings.MainSession.HasValue)
-            {
-                var controlSession = settings.Sessions[settings.MainSession.Value];
-                var route = controlSession.Routes[routeIndex];
-                var channels = controlSession.Channels ?? BrokerChannels.Default;
+            var session = options.Session;
+            var channels = session.Channels ?? BrokerChannels.Default;
 
-                var requestTopic = new MqttRpcTopic(route.Path, channels.Request ?? BrokerChannels.Default.Request, Namespace, Name, route.To);
-                var responseTopic = new MqttRpcTopic(route.Path, channels.Response ?? BrokerChannels.Default.Response, Namespace, route.To, Name);
-                var notificationTopic = new MqttRpcTopic(route.Path, channels.Notification ?? BrokerChannels.Default.Notification, Namespace, route.To, MqttRpcTopic.MULTI_LEVEL_WILDCHAR_STR);
-                var topics = new JsonRpcPubSubTopics(requestTopic, responseTopic, notificationTopic);
-                return topics;
-            }
-            return null;
+            var route = options.Route;
+            var ns = route.Namespace;
+            var name = session.Name;
+            var path = route.Path;
+            var to = route.To;
+            var requestTopic = new MqttRpcTopic(path, channels.Request ?? BrokerChannels.Default.Request, ns, name, to);
+            var responseTopic = new MqttRpcTopic(path, channels.Response ?? BrokerChannels.Default.Response, ns, to, name);
+            var notificationTopic = new MqttRpcTopic(path, channels.Notification ?? BrokerChannels.Default.Notification, ns, to, MqttRpcTopic.MULTI_LEVEL_WILDCHAR_STR);
+            var topics = new JsonRpcPubSubTopics(requestTopic, responseTopic, notificationTopic);
+            return topics;
         }
 
         public override IEnumerable<IRpcTopic> Subscriptions()

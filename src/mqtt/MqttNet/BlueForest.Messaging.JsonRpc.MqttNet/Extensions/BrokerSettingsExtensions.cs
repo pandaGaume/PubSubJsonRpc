@@ -17,5 +17,8 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             return options;
         }
 
+        public static BrokerSession GetMainSession(this JsonRpcMqttSettings settings) => settings.Sessions[settings.MainSession ?? 0];
+        public static BrokerRoute GetMainRoute(this BrokerSession session) => session.Routes[session.MainRoute ?? 0];
+
     }
 }

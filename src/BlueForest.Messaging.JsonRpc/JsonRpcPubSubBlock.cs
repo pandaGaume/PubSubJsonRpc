@@ -18,11 +18,14 @@ namespace BlueForest.Messaging.JsonRpc
         internal ITargetBlock<IPublishEvent> _target;
         internal JsonRpcPubSubHandlerBlock _handler;
         internal ISourceBlock<IPublishEvent> _source;
+        internal JsonRpcPubSubOptions _options;
 
         private bool disposed;
 
-        public JsonRpcPubSubBlock(JsonRpcPubSubTopics topics, IJsonRpcMessageFormatter formatter = null)
+        public JsonRpcPubSubBlock(JsonRpcPubSubOptions options, IJsonRpcMessageFormatter formatter = null)
         {
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+
             // Configure the pipeline
             var smallBufferOptions = new ExecutionDataflowBlockOptions() { BoundedCapacity = 1000 };
             
@@ -51,7 +54,7 @@ namespace BlueForest.Messaging.JsonRpc
             }, smallBufferOptions);
 
             // the rpc handler
-            _handler = new JsonRpcPubSubHandlerBlock(topics, formatter);
+            _handler = new JsonRpcPubSubHandlerBlock(options, formatter);
 
             // the encoder
             var encoderBlock = new TransformBlock<PUB_SUB_RPC_MESSAGE, IPublishEvent>(rpcMsg =>
@@ -97,8 +100,7 @@ namespace BlueForest.Messaging.JsonRpc
             InitializeRpc();
         }
 
-        public ITargetBlock<PUB_SUB_RPC_MESSAGE> LocalTarget => _handler;
-
+ 
         // used for server side
         public void AddLocalRpcTarget(object target) => _rpc?.AddLocalRpcTarget(target);
         // used for client side
@@ -106,10 +108,9 @@ namespace BlueForest.Messaging.JsonRpc
         public T Attach<T>() where T : class => _rpc?.Attach<T>();
         public void StartListening() => _rpc?.StartListening();
         public StreamJsonRpc.JsonRpc RPC => _rpc;
-
+        public JsonRpcPubSubOptions Options => _options;
         private void _rpc_Disconnected(object sender, JsonRpcDisconnectedEventArgs e)
         {
-            InitializeRpc();
         }
 
         protected virtual void InitializeRpc()
@@ -142,6 +143,7 @@ namespace BlueForest.Messaging.JsonRpc
         }
 
         internal ISourceBlock<IPublishEvent> Source => _source;
+        public JsonRpcPubSubHandlerBlock RpcTarget => _handler;
         internal ITargetBlock<IPublishEvent> Target => _target;
         public Task Completion => _target.Completion;
         public IPublishEvent ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<IPublishEvent> target, out bool messageConsumed) => Source.ConsumeMessage(messageHeader, target, out messageConsumed);

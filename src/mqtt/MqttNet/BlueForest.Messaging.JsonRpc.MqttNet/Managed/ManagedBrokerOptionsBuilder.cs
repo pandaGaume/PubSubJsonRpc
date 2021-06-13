@@ -4,10 +4,10 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class ManagedBrokerOptionsBuilder
     {
-        BrokerSettings _settings;
+        BrokerOptions _settings;
         TimeSpan? _autoReconnectDelay;
 
-        public ManagedBrokerOptionsBuilder WithMqttBrokerSettings(BrokerSettings s)
+        public ManagedBrokerOptionsBuilder WithMqttBrokerSettings(BrokerOptions s)
         {
             _settings = s;
             return this;

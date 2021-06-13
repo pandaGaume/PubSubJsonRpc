@@ -1,4 +1,4 @@
-﻿using Microsoft;
+﻿using Microsoft.Extensions.Caching.Memory;
 using StreamJsonRpc;
 using StreamJsonRpc.Protocol;
 using System;
@@ -16,21 +16,27 @@ namespace BlueForest.Messaging.JsonRpc
 
         readonly internal BufferBlock<PUB_SUB_RPC_MESSAGE> _target;
         readonly internal BufferBlock<PUB_SUB_RPC_MESSAGE> _source;
-        internal JsonRpcPubSubTopics _topics;
+        internal JsonRpcPubSubOptions _options;
 
-        public JsonRpcPubSubHandlerBlock(JsonRpcPubSubTopics topics, IJsonRpcMessageFormatter formatter) : this(topics, formatter, new DataflowBlockOptions())
+        public JsonRpcPubSubHandlerBlock(JsonRpcPubSubOptions options, IJsonRpcMessageFormatter formatter) : this(options, formatter, new DataflowBlockOptions())
         {
         }
  
-        public JsonRpcPubSubHandlerBlock(JsonRpcPubSubTopics topics, IJsonRpcMessageFormatter formatter, DataflowBlockOptions dataflowBlockOptions) : base(formatter)
+        public JsonRpcPubSubHandlerBlock(JsonRpcPubSubOptions options, IJsonRpcMessageFormatter formatter, DataflowBlockOptions dataflowBlockOptions) : base(formatter)
         {
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _target = new BufferBlock<PUB_SUB_RPC_MESSAGE>(dataflowBlockOptions);
             _source = new BufferBlock<PUB_SUB_RPC_MESSAGE>(dataflowBlockOptions);
             _ = _target.Completion.ContinueWith(delegate
             {
                 _source?.Complete();
             }, TaskScheduler.Default);
-            _topics = topics;
+            _cacheEntryOptions = new MemoryCacheEntryOptions().RegisterPostEvictionCallback(OnPostEviction);
+            if(_options.RequestTimeout.HasValue)
+            {
+                _cacheEntryOptions = _cacheEntryOptions.SetAbsoluteExpiration(_options.RequestTimeout.Value);
+            }
+
         }
 
         public override bool CanRead => true;
@@ -48,6 +54,23 @@ namespace BlueForest.Messaging.JsonRpc
                     request.RequestId = newId;
                     _requestIdIndex.TryAdd(newId, (oldId, mess.Item2));
                 }
+                else if (mess.Item1 is JsonRpcResult result)
+                {
+                    if(_requestCache.TryGetValue(result.RequestId, out var id))
+                    {
+                        _requestCache.Remove(id);
+                        return mess.Item1;
+                    }
+                }
+                else if (mess.Item1 is JsonRpcError error)
+                {
+                    if (_requestCache.TryGetValue(error.RequestId, out var id))
+                    {
+                        _requestCache.Remove(id);
+                        return mess.Item1;
+                    }
+                }
+
                 return mess.Item1;
             }
             return default;
@@ -65,7 +88,7 @@ namespace BlueForest.Messaging.JsonRpc
                     if (_requestIdIndex.TryGetValue(id, out var cache))
                     {
                         IRpcTopic topic = cache.Item2.ReverseInPlace();
-                        topic.Channel = _topics.Response.Channel;
+                        topic.Channel = _options.Topics.Response.Channel;
                         if (!cache.Item1.IsEmpty)
                         {
                             result.RequestId = cache.Item1;
@@ -79,7 +102,7 @@ namespace BlueForest.Messaging.JsonRpc
                     if (_requestIdIndex.TryGetValue(id, out var cache))
                     {
                         IRpcTopic topic = cache.Item2.ReverseInPlace();
-                        topic.Channel = _topics.Response.Channel;
+                        topic.Channel = _options.Topics.Response.Channel;
                         if (!cache.Item1.IsEmpty)
                         {
                             error.RequestId = cache.Item1;
@@ -89,7 +112,11 @@ namespace BlueForest.Messaging.JsonRpc
                 } 
                 else if (c is JsonRpcRequest request)
                 {
-                    _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, request.IsNotification?_topics.Notification : _topics.Request));
+                    if (!request.IsResponseExpected) 
+                    {
+                        _requestCache.Set(request.RequestId, request.RequestId, _cacheEntryOptions);
+                     }
+                    _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, request.IsNotification? _options.Topics.Notification : _options.Topics.Request));
                 }
             }
             finally
@@ -103,8 +130,20 @@ namespace BlueForest.Messaging.JsonRpc
             return new ValueTask();
         }
         protected override ValueTask FlushAsync(CancellationToken cancellationToken) => default;
+        
+        public void PostBackRequestError(RequestId id, JsonRpcErrorCode code = JsonRpcErrorCode.InternalError, string message = null)
+        {
+            JsonRpcMessage m = new JsonRpcError()
+            {
+                RequestId = id,
+                Error = new JsonRpcError.ErrorDetail() { Code = code, Message = message }
+            };
+            _target.Post(new Tuple<JsonRpcMessage, IRpcTopic>(m, null));
+        }
+
         internal ISourceBlock<PUB_SUB_RPC_MESSAGE> Source => _source;
         internal ITargetBlock<PUB_SUB_RPC_MESSAGE> Target => _target;
+        public JsonRpcPubSubOptions Options => _options;
         public Task Completion => _source.Completion;
         public PUB_SUB_RPC_MESSAGE ConsumeMessage(DataflowMessageHeader messageHeader, ITargetBlock<PUB_SUB_RPC_MESSAGE> target, out bool messageConsumed) => Source.ConsumeMessage(messageHeader, target, out messageConsumed);
         public IDisposable LinkTo(ITargetBlock<PUB_SUB_RPC_MESSAGE> target, DataflowLinkOptions linkOptions) => _source.LinkTo(target, linkOptions);

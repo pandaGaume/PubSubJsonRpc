@@ -35,10 +35,11 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         ConcurrentDictionary<Guid, JsonRpcSubscription> _subscriptions;
 
         event AsyncEventHandler<MqttClientConnectedEventArgs> _onConnected;
+        event AsyncEventHandler<MqttClientDisconnectedEventArgs> _onDisconnected;
+
         internal JsonRpcManagedMqttClient(ManagedBrokerOptions settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-
             _runLock = new SemaphoreSlim(1);
             _connectingLock = new SemaphoreSlim(1);
             _subscriptions = new ConcurrentDictionary<Guid, JsonRpcSubscription>();
@@ -50,7 +51,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                 var e = new PublishEvent()
                 {
                     Payload = new ReadOnlySequence<byte>(eventArgs.ApplicationMessage.Payload),
-                    Topic = MqttRpcTopic.Parse(eventArgs.ApplicationMessage.Topic)
+                    Topic = TopicLogic.Parse(eventArgs.ApplicationMessage.Topic)
                 };
 #if DEBUG
                 var payloadStr = Encoding.UTF8.GetString(e.Payload.ToArray());
@@ -61,8 +62,8 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 
             var dispatcher = new ActionBlock<IPublishEvent>(async (e) =>
             {
-                var subscriptions = _subscriptions.Values.ToArray();
-                foreach(var s in subscriptions.Match(e.Topic))
+                var subscriptions = _subscriptions.Values.Where(s => TopicLogic.Match(s?.Topic, e.Topic)).ToArray();
+                foreach (var s in subscriptions)
                 {
                     await s.Target.SendAsync(e);
                 }
@@ -79,10 +80,10 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             _client.ConnectedHandler = this;
             _client.ApplicationMessageReceivedHandler = this;
         }
+        public virtual IRpcTopicLogic TopicLogic => _settings.TopicLogic ?? DefaultTopicLogic.Shared;
         public async Task<JsonRpcSubscribeResult> SubscribeAsync(ITargetBlock<IPublishEvent> target, IRpcTopic topic, MqttQualityOfServiceLevel qos, Encoding encoding = null, CancellationToken cancellationToken = default)
         {
-            encoding = encoding ?? Encoding.UTF8;
-            var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(qos).WithTopic(encoding.GetString(topic.Assemble().ToArray()));
+            var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(qos).WithTopic(TopicLogic.Assemble(topic,TopicUse.Subscribe));
             var optionsBuilder = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(filterBuilder.Build());
             MqttClientSubscribeResult results = null;
             results = await _client.SubscribeAsync(optionsBuilder.Build(), cancellationToken);
@@ -118,15 +119,20 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         }
         public event AsyncEventHandler<MqttClientConnectedEventArgs> OnConnected
         {
-            add 
-            { 
+            add
+            {
                 _onConnected += value;
-                if(_client.IsConnected)
+                if (_client.IsConnected)
                 {
                     _ = value.InvokeAsync(this, new MqttClientConnectedEventArgs(_lastConnectionResult));
                 }
             }
             remove { _onConnected -= value; }
+        }
+        public event AsyncEventHandler<MqttClientDisconnectedEventArgs> OnDisconnected
+        {
+            add    { _onDisconnected += value;}
+            remove { _onDisconnected -= value; }
         }
         public async Task HandleConnectedAsync(MqttClientConnectedEventArgs eventArgs)
         {

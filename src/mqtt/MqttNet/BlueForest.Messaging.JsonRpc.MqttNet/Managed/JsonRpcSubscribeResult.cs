@@ -1,7 +1,6 @@
 ﻿using MQTTnet.Client.Subscribing;
 using System;
 
-
 namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class JsonRpcSubscribeResult

@@ -2,13 +2,19 @@
 
 namespace BlueForest.Messaging.JsonRpc
 {
-    public interface IRpcTopic
+    public enum TopicUse
     {
-        ReadOnlyMemory<byte> Path { get; set; }
-        ReadOnlyMemory<byte> Channel { get; set; }
-        ReadOnlyMemory<byte> Namespace { get; set; }
-        ReadOnlyMemory<byte> From { get; set; }
-        ReadOnlyMemory<byte> To { get; set; }
+        Publish, Subscribe
+    }
+
+    public interface IRpcTopic 
+    {
+        string Path { get; set; }
+        string Stream { get; set; }
+        string Channel { get; set; }
+        string Namespace { get; set; }
+        string From { get; set; }
+        string To { get; set; }
         IRpcTopic ReverseInPlace();
     }
 }

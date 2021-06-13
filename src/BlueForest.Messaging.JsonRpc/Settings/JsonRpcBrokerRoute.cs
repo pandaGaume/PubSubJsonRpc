@@ -1,8 +1,10 @@
 ﻿namespace BlueForest.Messaging.JsonRpc
 {
-    public class BrokerRoute
+    public class JsonRpcBrokerRoute
     {
         public string Path { get; set; }
+        public string Stream { get; set; }
+        public JsonRpcBrokerChannels Channels { get; set; }
         public string Namespace { get; set; }
         public string From { get; set; }
         public string To { get; set; }

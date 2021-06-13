@@ -1,6 +1,6 @@
 ﻿namespace BlueForest.Messaging.JsonRpc
 {
-    public class BrokerSettings
+    public class BrokerOptions
     {
         public string Host { get; set; }
         public int? Port { get; set; }

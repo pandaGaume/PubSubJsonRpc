@@ -4,7 +4,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public static class BrokerSettingsExtensions
     {
-        public static IMqttClientOptions BuildMqttClientOptions(this BrokerSettings settings)
+        public static IMqttClientOptions BuildMqttClientOptions(this BrokerOptions settings)
         {
 
             var optionsBuilder = new MqttClientOptionsBuilder()
@@ -17,8 +17,8 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             return options;
         }
 
-        public static BrokerSession GetMainSession(this JsonRpcMqttSettings settings) => settings.Sessions[settings.MainSession ?? 0];
-        public static BrokerRoute GetMainRoute(this BrokerSession session) => session.Routes[session.MainRoute ?? 0];
+        public static JsonRpcBrokerSession GetMainSession(this JsonRpcMqttOptions settings) => settings.Sessions[settings.MainSession ?? 0];
+        public static JsonRpcBrokerRoute GetMainRoute(this JsonRpcBrokerSession session) => session.Routes[session.MainRoute ?? 0];
 
     }
 }

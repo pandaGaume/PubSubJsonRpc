@@ -31,7 +31,7 @@ namespace Devices
     public interface ISwitchApi
     {
         event EventHandler<bool> StatusChanged;
-        ValueTask<SetStatusResult> TrySetStatusAsync(bool status);
+        ValueTask<SetStatusResult> SetStatusAsync(bool status);
         ValueTask<bool> GetStatusAsync();
         ValueTask<SetStatusResult> ToogleAsync();
         ValueTask CompleteAsync();
@@ -56,7 +56,7 @@ namespace Devices
 
         public ValueTask<bool> GetStatusAsync() => new ValueTask<bool>(_status);
 
-        public ValueTask<SetStatusResult> TrySetStatusAsync(bool status)
+        public ValueTask<SetStatusResult> SetStatusAsync(bool status)
         {
             if (_status != status)
             {
@@ -67,7 +67,7 @@ namespace Devices
             return new ValueTask<SetStatusResult>(new SetStatusResult(_status));
         }
 
-        public ValueTask<SetStatusResult> ToogleAsync() => TrySetStatusAsync(!_status);
+        public ValueTask<SetStatusResult> ToogleAsync() => SetStatusAsync(!_status);
 
         public ValueTask CompleteAsync()
         {

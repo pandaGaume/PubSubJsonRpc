@@ -32,12 +32,23 @@ namespace SimpleServer
             var session = new JsonRpcBrokerSession()
             {
                 Name = "SwitchService",
+                // you can define more than one route, according differents services and logics
                 Routes = new JsonRpcBrokerRoute[]
                 {
                     new JsonRpcBrokerRoute()
                     {
+                        // change here the channel topics values 
+                        // default is DefaultTopicLogic.Shared.ChannelNames
+                        Channels = new JsonRpcBrokerChannels()
+                        {
+                            Request = "0",
+                            Response = "1",
+                            Notification = "2",
+                        },
+                        // for a server, From & To are unecessary and are equals to Name & Incoming From topic
                         Namespace = "BlueForest",
                         Path = "dotvision",
+                        // quality of service used for the route
                         Qos = 1
                     }
                 }
@@ -48,7 +59,10 @@ namespace SimpleServer
             var managedClientBuilder = new JsonRpcManagedClientBuilder().WithOptions(managedBrokerOptionsBuilder);
             
             // build the options.
-            var optionsBuilder = new MqttJsonRpcServiceOptionsBuilder().WithClient(managedClientBuilder).WithSession(session).WithRoute(session.GetMainRoute());
+            var optionsBuilder = new MqttJsonRpcServiceOptionsBuilder()
+                .WithClient(managedClientBuilder)
+                .WithSession(session)
+                .WithRoute(session.GetMainRoute());
 
             // start the service with the above options
             await rpc.StartAsync(optionsBuilder.Build());

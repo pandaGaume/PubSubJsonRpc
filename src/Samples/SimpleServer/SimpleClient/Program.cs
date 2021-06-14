@@ -45,9 +45,9 @@ namespace SimpleClient
                             Response = "1",
                             Notification = "2",
                         },
+                        // for a client, From is unecessary and is equals to Name
                         Namespace = "BlueForest",
                         Path = "dotvision",
-                        // for a client, From is unecessary and is equals to Name
                         To = "SwitchService",
                         // quality of service used for the route
                         Qos = 1
@@ -65,7 +65,7 @@ namespace SimpleClient
             var optionsBuilder = new MqttJsonRpcServiceOptionsBuilder()
                 .WithClient(managedClientBuilder)
                 .WithSession(session)
-                .WithRoute(session.GetMainRoute()) // get Main route is defined in session, 0 by default
+                .WithRoute(session.GetMainRoute()) // Main route is defined in session, 0 by default
                 .WithRequestTimeout(TimeSpan.FromSeconds(5));
 
             // start the service with the above options

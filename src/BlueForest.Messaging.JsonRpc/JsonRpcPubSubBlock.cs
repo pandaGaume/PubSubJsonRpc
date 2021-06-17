@@ -2,7 +2,9 @@
 using StreamJsonRpc.Protocol;
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -19,7 +21,7 @@ namespace BlueForest.Messaging.JsonRpc
         internal JsonRpcPubSubHandlerBlock _handler;
         internal ISourceBlock<IPublishEvent> _source;
         internal JsonRpcPubSubOptions _options;
-
+        internal IDictionary<string, string> _nameIndex;
         private bool disposed;
 
         public JsonRpcPubSubBlock(JsonRpcPubSubOptions options, IJsonRpcMessageFormatter formatter = null)
@@ -33,7 +35,7 @@ namespace BlueForest.Messaging.JsonRpc
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
             // build a formatter for jsonRPC
-            formatter = formatter ?? new JsonMessageFormatter(Encoding.UTF8);
+            formatter = formatter ?? new JsonMessageFormatter();
             
             // thanks to decoder block, we avoid parse fatal error which kill the rpc server instance and ignore silently.
             var decoderBlock = new TransformBlock<IPublishEvent, PUB_SUB_RPC_MESSAGE>((publishEvent) =>
@@ -60,13 +62,10 @@ namespace BlueForest.Messaging.JsonRpc
             var encoderBlock = new TransformBlock<PUB_SUB_RPC_MESSAGE, IPublishEvent>(rpcMsg =>
             {
                 var w = new ArrayBufferWriter<byte>();
-                // trim header
                 formatter.Serialize(w, rpcMsg.Item1);
-                var span = w.WrittenMemory.Span;
-                var i = span.IndexOf((byte)0x7B);
                 var pe = new PublishEvent()
                 {
-                    Payload = new ReadOnlySequence<byte>(w.WrittenMemory.Slice(i)),
+                    Payload = new ReadOnlySequence<byte>(w.WrittenMemory),
                     Topic = rpcMsg.Item2
                 };
                 if(rpcMsg.Item1 is JsonRpcRequest request)
@@ -103,12 +102,39 @@ namespace BlueForest.Messaging.JsonRpc
             InitializeRpc();
         }
 
- 
         // used for server side
-        public void AddLocalRpcTarget(object target) => _rpc?.AddLocalRpcTarget(target);
+        public void AddLocalRpcTarget(object target, JsonRpcTargetOptions options = null)
+        {
+            if (options == null || options.MethodNameTransform == null)
+            {
+                var i = ProcessType(target.GetType());
+                if (i != null && i.Count != 0)
+                {
+                    options = options ?? new JsonRpcTargetOptions();
+                    _nameIndex = i;
+                    options.MethodNameTransform = GetMethodName;
+                }
+            }
+            _rpc?.AddLocalRpcTarget(target, options);
+        }
+
         // used for client side
-        public object Attach(Type api) => _rpc?.Attach(api);
-        public T Attach<T>() where T : class => _rpc?.Attach<T>();
+        public object Attach(Type api, JsonRpcProxyOptions options = null)
+        {
+            if(options == null || options.MethodNameTransform == null)
+            {
+                var i = ProcessType(api);
+                if( i != null && i.Count != 0)
+                {
+                    options = options ?? new JsonRpcProxyOptions();
+                    _nameIndex = i;
+                    options.MethodNameTransform = GetMethodName;
+                }
+            }
+            return _rpc?.Attach(api, options);
+        }
+        public T Attach<T>(JsonRpcProxyOptions options = null) where T : class => (T)Attach(typeof(T), options);
+        
         public void StartListening() => _rpc?.StartListening();
         public StreamJsonRpc.JsonRpc RPC => _rpc;
         public JsonRpcPubSubOptions Options => _options;
@@ -143,6 +169,26 @@ namespace BlueForest.Messaging.JsonRpc
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+
+        private IDictionary<string,string> ProcessType(Type apiType)
+        {
+            var methods = apiType.GetMethods().Where(m=>m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false).Length != 0).ToArray();
+            if (methods.Length != 0)
+            {
+                return methods.ToDictionary(m => m.Name, m => ((JsonRpcMethodNameAttribute)m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false)[0]).Name);
+            }
+            return null;
+        }
+
+        private string GetMethodName(string method)
+        {
+            if(_nameIndex != null && _nameIndex.TryGetValue(method, out string name))
+            {
+                return name;
+            }
+            return method;
         }
 
         internal ISourceBlock<IPublishEvent> Source => _source;

@@ -139,6 +139,9 @@ namespace BlueForest.Messaging.JsonRpc
                 Error = new JsonRpcError.ErrorDetail() { Code = code, Message = message }
             };
             _target.Post(new Tuple<JsonRpcMessage, IRpcTopic>(m, null));
+#if DEBUG
+            Console.WriteLine($"PosBack Error : {m}");
+#endif
         }
 
         internal ISourceBlock<PUB_SUB_RPC_MESSAGE> Source => _source;

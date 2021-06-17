@@ -60,10 +60,13 @@ namespace BlueForest.Messaging.JsonRpc
             var encoderBlock = new TransformBlock<PUB_SUB_RPC_MESSAGE, IPublishEvent>(rpcMsg =>
             {
                 var w = new ArrayBufferWriter<byte>();
+                // trim header
                 formatter.Serialize(w, rpcMsg.Item1);
+                var span = w.WrittenMemory.Span;
+                var i = span.IndexOf((byte)0x7B);
                 var pe = new PublishEvent()
                 {
-                    Payload = new ReadOnlySequence<byte>(w.WrittenMemory),
+                    Payload = new ReadOnlySequence<byte>(w.WrittenMemory.Slice(i)),
                     Topic = rpcMsg.Item2
                 };
                 if(rpcMsg.Item1 is JsonRpcRequest request)

@@ -15,15 +15,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{FD09
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SimpleServer", "SimpleServer", "{B8EA89B5-C7D5-4750-AD83-48BCFD99ACBD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleServer", "Samples\SimpleServer\SimpleServer\SimpleServer.csproj", "{895C8DEE-8D8A-4BDB-A651-52A11E16E67A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleServer", "Samples\SimpleServer\SimpleServer\SimpleServer.csproj", "{895C8DEE-8D8A-4BDB-A651-52A11E16E67A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commons", "Samples\SimpleServer\Commons\Commons.csproj", "{9D5024BA-6A54-44FE-93C8-1728A7C1FE5D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Commons", "Samples\SimpleServer\Commons\Commons.csproj", "{9D5024BA-6A54-44FE-93C8-1728A7C1FE5D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JsonRpc", "JsonRpc", "{AD61E379-D5A0-4399-91D6-66ACB81665B2}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StreamJsonRpc", "..\..\vs-streamjsonrpc\src\StreamJsonRpc\StreamJsonRpc.csproj", "{92E37584-45BA-4F3B-BCD1-712BD87F5501}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleClient", "Samples\SimpleServer\SimpleClient\SimpleClient.csproj", "{1ACF4DAC-7F05-4B25-AB06-063EA069258B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimpleClient", "Samples\SimpleServer\SimpleClient\SimpleClient.csproj", "{1ACF4DAC-7F05-4B25-AB06-063EA069258B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,10 +43,6 @@ Global
 		{9D5024BA-6A54-44FE-93C8-1728A7C1FE5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9D5024BA-6A54-44FE-93C8-1728A7C1FE5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D5024BA-6A54-44FE-93C8-1728A7C1FE5D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{92E37584-45BA-4F3B-BCD1-712BD87F5501}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{92E37584-45BA-4F3B-BCD1-712BD87F5501}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{92E37584-45BA-4F3B-BCD1-712BD87F5501}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{92E37584-45BA-4F3B-BCD1-712BD87F5501}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1ACF4DAC-7F05-4B25-AB06-063EA069258B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1ACF4DAC-7F05-4B25-AB06-063EA069258B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1ACF4DAC-7F05-4B25-AB06-063EA069258B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -65,7 +57,6 @@ Global
 		{B8EA89B5-C7D5-4750-AD83-48BCFD99ACBD} = {FD09533C-42AF-4E22-BAB4-F89C0F2ACEB7}
 		{895C8DEE-8D8A-4BDB-A651-52A11E16E67A} = {B8EA89B5-C7D5-4750-AD83-48BCFD99ACBD}
 		{9D5024BA-6A54-44FE-93C8-1728A7C1FE5D} = {B8EA89B5-C7D5-4750-AD83-48BCFD99ACBD}
-		{92E37584-45BA-4F3B-BCD1-712BD87F5501} = {AD61E379-D5A0-4399-91D6-66ACB81665B2}
 		{1ACF4DAC-7F05-4B25-AB06-063EA069258B} = {B8EA89B5-C7D5-4750-AD83-48BCFD99ACBD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

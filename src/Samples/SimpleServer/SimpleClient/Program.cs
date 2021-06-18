@@ -41,7 +41,7 @@ namespace SimpleClient
                         // default is DefaultTopicLogic.Shared.ChannelNames
                         Channels = new JsonRpcBrokerChannels()
                         {
-                            Request = "0", 
+                            Request = "0",
                             Response = "1",
                             Notification = "2",
                         },
@@ -69,7 +69,7 @@ namespace SimpleClient
 
             // start the service with the above options
             await rpc.StartAsync(optionsBuilder.Build());
-            
+
             // NOTE - we need to wait for the rpc started to gain acces to the underlying service proxy.
             // otherwise its null. 
             var service = rpc.Delegate;
@@ -87,9 +87,11 @@ namespace SimpleClient
                         try
                         {
                             // set timeout
-                            var src = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                            // call the service
-                            await service.ToogleAsync(src.Token);
+                            using (var src = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+                            {
+                                // call the service
+                                await service.ToogleAsync(src.Token);
+                            }
                         }
                         catch (OperationCanceledException)
                         {
@@ -101,8 +103,8 @@ namespace SimpleClient
                         }
 
                         // then wait random time 
-                        var d = r.NextDouble() * 10000;
-                        await Task.Delay( (int)d, token);
+                        var d = r.NextDouble() * 1000;
+                        await Task.Delay((int)d, token);
                     } while (!token.IsCancellationRequested);
                 }
             };
@@ -115,12 +117,12 @@ namespace SimpleClient
                 return Task.CompletedTask;
             };
 
-            rpc.Broker.OnDisconnected +=  (o, a) =>
-            {
-                // stopt the deamon when disconnected
-                cancelToogleDaemon.Cancel();
-                return Task.CompletedTask;
-            };
+            rpc.Broker.OnDisconnected += (o, a) =>
+           {
+               // stopt the deamon when disconnected
+               cancelToogleDaemon.Cancel();
+               return Task.CompletedTask;
+           };
 
             // wait for ever...
             var completion = new TaskCompletionSource<bool>();

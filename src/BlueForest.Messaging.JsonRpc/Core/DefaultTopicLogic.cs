@@ -36,13 +36,14 @@ namespace BlueForest.Messaging.JsonRpc
             if (usage == TopicUse.Subscribe)
             {
                 i = tmp.Length;
-                while (i >= 0 && tmp[--i] == null);
-                if (i != tmp.Length-1) {
+                while (i >= 0 && tmp[--i] == null) ;
+                if (i != tmp.Length - 1)
+                {
                     tmp[i] = MULTI_LEVEL_WILD_STR;
                 }
-                for(;i>=0;i--)
+                for (; i >= 0; i--)
                 {
-                    if(tmp[i] == null) tmp[i] = SINGLE_LEVEL_WILD_STR;
+                    if (tmp[i] == null) tmp[i] = SINGLE_LEVEL_WILD_STR;
                 }
                 i = 0;
             }
@@ -59,7 +60,7 @@ namespace BlueForest.Messaging.JsonRpc
         {
             // according the usage, we assume receiving matching subscription topic.
             // the goal here is to compare the rpc part ONLY, which is limited to <channel>/<namespace>/<from>/<to>
-            return (a.Channel == SINGLE_LEVEL_WILD_STR || String.Compare(a.Channel, b.Channel) == 0) && 
+            return (a.Channel == SINGLE_LEVEL_WILD_STR || String.Compare(a.Channel, b.Channel) == 0) &&
                    (a.Namespace == SINGLE_LEVEL_WILD_STR || String.Compare(a.Namespace, b.Namespace) == 0) &&
                    (a.From == SINGLE_LEVEL_WILD_STR || String.Compare(a.From, b.From) == 0) &&
                    (a.To == MULTI_LEVEL_WILD_STR || String.Compare(a.To, b.To) == 0);
@@ -68,7 +69,7 @@ namespace BlueForest.Messaging.JsonRpc
         public IRpcTopic Parse(string topicStr)
         {
             string[] tmp = topicStr.Split(SEPARATOR);
-            if( tmp.Length < MinimumPartsCount)
+            if (tmp.Length < MinimumPartsCount)
             {
                 throw new FormatException();
             }
@@ -78,7 +79,7 @@ namespace BlueForest.Messaging.JsonRpc
             {
                 if (string.Compare(tmp[i], s) == 0) break;
             }
-            if (i > (tmp.Length - MinimumPartsCount+1))
+            if (i > (tmp.Length - MinimumPartsCount + 1))
             {
                 throw new FormatException();
             }
@@ -88,7 +89,7 @@ namespace BlueForest.Messaging.JsonRpc
             t.Channel = tmp[i++];
             t.Namespace = tmp[i++];
             t.From = tmp[i++];
-            if( i < tmp.Length)
+            if (i < tmp.Length)
             {
                 t.To = tmp[i];
             }

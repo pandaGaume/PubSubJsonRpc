@@ -4,8 +4,6 @@ using StreamJsonRpc;
 using StreamJsonRpc.Protocol;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -16,7 +14,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
     {
         public static int DefaultQos = (int)MqttQualityOfServiceLevel.AtLeastOnce;
 
-        MqttJsonRpcServiceOptions _options; 
+        MqttJsonRpcServiceOptions _options;
         internal T _delegate;
         internal JsonRpcPubSubBlock _target;
         private bool disposedValue;
@@ -58,7 +56,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                             OnPublishFault(e);
                         }
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         OnPublishFault(e, ex);
                     }
@@ -82,7 +80,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 
         private void OnPublishFault(IPublishEvent publish, Exception ex = null)
         {
-            if (publish.PublishType == PublishType.Request) 
+            if (publish.PublishType == PublishType.Request)
             {
                 _target.RpcTarget.PostBackRequestError(publish.RequestId, JsonRpcErrorCode.InternalError, ex?.Message);
             }

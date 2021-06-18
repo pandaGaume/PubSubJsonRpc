@@ -8,7 +8,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         readonly Guid _guid;
         readonly MqttClientSubscribeResultCode _code;
 
-        public JsonRpcSubscribeResult(MqttClientSubscribeResultCode code): this(code, Guid.Empty)
+        public JsonRpcSubscribeResult(MqttClientSubscribeResultCode code) : this(code, Guid.Empty)
         {
         }
 

@@ -1,5 +1,4 @@
 ﻿using StreamJsonRpc;
-using System;
 using System.Buffers;
 
 namespace BlueForest.Messaging.JsonRpc
@@ -18,6 +17,6 @@ namespace BlueForest.Messaging.JsonRpc
         IRpcTopic Topic { get; }
         ReadOnlySequence<byte> Payload { get; }
         RequestId RequestId { get; set; }
-        PublishType PublishType { get;set;}
+        PublishType PublishType { get; set; }
     }
 }

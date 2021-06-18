@@ -3,7 +3,7 @@
 namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class MqttJsonRpcClient<T> : MqttJsonRpcService<T>
-        where T:class
+        where T : class
     {
 
         public override JsonRpcPubSubTopics GetTopics(MqttJsonRpcServiceOptions options)
@@ -25,7 +25,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 
             var requestTopic = new RpcTopic(path, stream, request, ns, name, to);
             var responseTopic = new RpcTopic(path, stream, response, ns, to, name);
-            var notificationTopic = new RpcTopic(path, stream, notification , ns, to, DefaultTopicLogic.MULTI_LEVEL_WILD_STR);
+            var notificationTopic = new RpcTopic(path, stream, notification, ns, to, DefaultTopicLogic.MULTI_LEVEL_WILD_STR);
             var topics = new JsonRpcPubSubTopics(requestTopic, responseTopic, notificationTopic);
             return topics;
         }

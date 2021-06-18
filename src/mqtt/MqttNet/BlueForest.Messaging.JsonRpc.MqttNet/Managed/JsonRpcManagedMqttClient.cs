@@ -47,7 +47,8 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             // Configure the pipeline
             var largeBufferOptions = new ExecutionDataflowBlockOptions() { BoundedCapacity = 10000 };
 
-            var decoder = new TransformBlock<MqttApplicationMessageReceivedEventArgs,IPublishEvent>((eventArgs) => {
+            var decoder = new TransformBlock<MqttApplicationMessageReceivedEventArgs, IPublishEvent>((eventArgs) =>
+            {
                 var e = new PublishEvent()
                 {
                     Payload = new ReadOnlySequence<byte>(eventArgs.ApplicationMessage.Payload),
@@ -68,7 +69,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                     await s.Target.SendAsync(e);
                 }
             }, largeBufferOptions);
-            
+
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
             decoder.LinkTo(dispatcher, linkOptions);
@@ -83,7 +84,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         public virtual IRpcTopicLogic TopicLogic => _settings.TopicLogic ?? DefaultTopicLogic.Shared;
         public async Task<JsonRpcSubscribeResult> SubscribeAsync(ITargetBlock<IPublishEvent> target, IRpcTopic topic, MqttQualityOfServiceLevel qos, Encoding encoding = null, CancellationToken cancellationToken = default)
         {
-            var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(qos).WithTopic(TopicLogic.Assemble(topic,TopicUse.Subscribe));
+            var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(qos).WithTopic(TopicLogic.Assemble(topic, TopicUse.Subscribe));
             var optionsBuilder = new MqttClientSubscribeOptionsBuilder().WithTopicFilter(filterBuilder.Build());
             MqttClientSubscribeResult results = null;
             results = await _client.SubscribeAsync(optionsBuilder.Build(), cancellationToken);
@@ -93,7 +94,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             {
                 guid = Guid.NewGuid();
                 int retry = 3;
-                while(_subscriptions.ContainsKey(guid) && --retry != 0)
+                while (_subscriptions.ContainsKey(guid) && --retry != 0)
                 {
                     guid = Guid.NewGuid();
                 }
@@ -131,7 +132,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         }
         public event AsyncEventHandler<MqttClientDisconnectedEventArgs> OnDisconnected
         {
-            add    { _onDisconnected += value;}
+            add { _onDisconnected += value; }
             remove { _onDisconnected -= value; }
         }
         public async Task HandleConnectedAsync(MqttClientConnectedEventArgs eventArgs)
@@ -155,13 +156,13 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                 {
                     return this;
                 }
-                 _stoppedSource = new CancellationTokenSource();
+                _stoppedSource = new CancellationTokenSource();
             }
             finally
             {
                 _runLock.Release();
             }
-            _ = Task.Run(async()=> await TryConnectAsync(_settings, cancellationToken));
+            _ = Task.Run(async () => await TryConnectAsync(_settings, cancellationToken));
             return this;
         }
         public async Task<JsonRpcManagedMqttClient> StopAsync(CancellationToken cancellationToken = default)
@@ -188,7 +189,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             try
             {
                 await _connectingLock.WaitAsync(cancellationToken);
-               
+
                 if (!_client.IsConnected)
                 {
                     try

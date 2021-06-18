@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BlueForest.Messaging.JsonRpc.MqttNet
+﻿namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class JsonRpcManagedClientBuilder
     {
@@ -19,6 +17,6 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             return this;
         }
 
-        public JsonRpcManagedMqttClient Build()=>new JsonRpcManagedMqttClient(_options??_builder?.Build());
+        public JsonRpcManagedMqttClient Build() => new JsonRpcManagedMqttClient(_options ?? _builder?.Build());
     }
 }

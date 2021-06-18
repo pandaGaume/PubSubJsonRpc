@@ -4,6 +4,6 @@
     {
         public ManagedBrokerOptions[] Clients { get; set; }
         public JsonRpcBrokerSession[] Sessions { get; set; }
-        public int ? MainSession { get; set; }
+        public int? MainSession { get; set; }
     }
 }

@@ -5,7 +5,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -30,13 +29,13 @@ namespace BlueForest.Messaging.JsonRpc
 
             // Configure the pipeline
             var smallBufferOptions = new ExecutionDataflowBlockOptions() { BoundedCapacity = 1000 };
-            
+
             // make sure our complete call gets propagated throughout the whole pipeline
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
             // build a formatter for jsonRPC
             formatter = formatter ?? new JsonMessageFormatter();
-            
+
             // thanks to decoder block, we avoid parse fatal error which kill the rpc server instance and ignore silently.
             var decoderBlock = new TransformBlock<IPublishEvent, PUB_SUB_RPC_MESSAGE>((publishEvent) =>
             {
@@ -71,7 +70,7 @@ namespace BlueForest.Messaging.JsonRpc
                     Payload = new ReadOnlySequence<byte>(w.WrittenMemory),
                     Topic = rpcMsg.Item2
                 };
-                if(rpcMsg.Item1 is JsonRpcRequest request)
+                if (rpcMsg.Item1 is JsonRpcRequest request)
                 {
                     pe.RequestId = request.RequestId;
                     pe.PublishType = request.IsNotification ? PublishType.Notification : PublishType.Request;
@@ -92,7 +91,7 @@ namespace BlueForest.Messaging.JsonRpc
 
             // link the block, filtering message.
             // Note we provide a NullTarget to lets the block waste message which do not pass the predicates
-            decoderBlock.LinkTo(_handler, linkOptions, m => { return m.Item1 != null ; });
+            decoderBlock.LinkTo(_handler, linkOptions, m => { return m.Item1 != null; });
             decoderBlock.LinkTo(DataflowBlock.NullTarget<PUB_SUB_RPC_MESSAGE>());
 
             _handler.LinkTo(encoderBlock, linkOptions, m => { return m.Item1 != null; });
@@ -124,10 +123,10 @@ namespace BlueForest.Messaging.JsonRpc
         // used for client side
         public object Attach(Type api, JsonRpcProxyOptions options = null)
         {
-            if(options == null || options.MethodNameTransform == null)
+            if (options == null || options.MethodNameTransform == null)
             {
                 var i = ProcessType(api);
-                if( i != null && i.Count != 0)
+                if (i != null && i.Count != 0)
                 {
                     options = options ?? new JsonRpcProxyOptions();
                     _nameIndex = i;
@@ -137,7 +136,7 @@ namespace BlueForest.Messaging.JsonRpc
             return _rpc?.Attach(api, options);
         }
         public T Attach<T>(JsonRpcProxyOptions options = null) where T : class => (T)Attach(typeof(T), options);
-        
+
         public void StartListening() => _rpc?.StartListening();
         public JsonRpcPubSubOptions Options => _options;
         private void _rpc_Disconnected(object sender, JsonRpcDisconnectedEventArgs e)
@@ -181,9 +180,9 @@ namespace BlueForest.Messaging.JsonRpc
         }
 
 
-        private IDictionary<string,string> ProcessType(Type apiType)
+        private IDictionary<string, string> ProcessType(Type apiType)
         {
-            var methods = apiType.GetMethods().Where(m=>m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false).Length != 0).ToArray();
+            var methods = apiType.GetMethods().Where(m => m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false).Length != 0).ToArray();
             if (methods.Length != 0)
             {
                 return methods.ToDictionary(m => m.Name, m => ((JsonRpcMethodNameAttribute)m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false)[0]).Name);
@@ -193,7 +192,7 @@ namespace BlueForest.Messaging.JsonRpc
 
         private string GetMethodName(string method)
         {
-            if(_nameIndex != null && _nameIndex.TryGetValue(method, out string name))
+            if (_nameIndex != null && _nameIndex.TryGetValue(method, out string name))
             {
                 return name;
             }

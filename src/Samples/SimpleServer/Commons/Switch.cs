@@ -55,7 +55,7 @@ namespace Devices
         }
         public Task Completion => _completion.Task;
 
-        public ValueTask<bool> GetStatusAsync(CancellationToken token=default) => new ValueTask<bool>(_status);
+        public ValueTask<bool> GetStatusAsync(CancellationToken token = default) => new ValueTask<bool>(_status);
 
         public ValueTask<SetStatusResult> SetStatusAsync(bool status, CancellationToken token = default)
         {
@@ -68,7 +68,7 @@ namespace Devices
             return new ValueTask<SetStatusResult>(new SetStatusResult(_status));
         }
 
-        public ValueTask<SetStatusResult> ToogleAsync(CancellationToken token = default) => SetStatusAsync(!_status,token);
+        public ValueTask<SetStatusResult> ToogleAsync(CancellationToken token = default) => SetStatusAsync(!_status, token);
 
         public ValueTask CompleteAsync(CancellationToken token = default)
         {

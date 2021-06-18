@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace BlueForest.Messaging.JsonRpc
 {
-    public partial class JsonRpcPubSubHandlerBlock 
+    public partial class JsonRpcPubSubHandlerBlock
     {
         MemoryCache _requestCache = new MemoryCache(new MemoryCacheOptions());
         List<RequestId> _evicted = new List<RequestId>(2);

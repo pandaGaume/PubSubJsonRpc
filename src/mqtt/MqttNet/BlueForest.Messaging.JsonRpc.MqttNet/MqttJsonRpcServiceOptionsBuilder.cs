@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BlueForest.Messaging.JsonRpc.MqttNet
+﻿namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class MqttJsonRpcServiceOptionsBuilder
     {
@@ -11,12 +9,12 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         int? _routeIndex = null;
 
 
-        public MqttJsonRpcServiceOptions Build()=> new MqttJsonRpcServiceOptions()
-            {
-                MqttClient = _client?? _builder?.Build(),
-                Session = _session,
-                Route = _route?? _session.Routes[_routeIndex??(_session.MainRoute??0)]
-            };
+        public MqttJsonRpcServiceOptions Build() => new MqttJsonRpcServiceOptions()
+        {
+            MqttClient = _client ?? _builder?.Build(),
+            Session = _session,
+            Route = _route ?? _session.Routes[_routeIndex ?? (_session.MainRoute ?? 0)]
+        };
 
         public MqttJsonRpcServiceOptionsBuilder WithClient(JsonRpcManagedMqttClient client)
         {

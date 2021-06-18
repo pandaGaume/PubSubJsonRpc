@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BlueForest.Messaging.JsonRpc
+﻿namespace BlueForest.Messaging.JsonRpc
 {
     public class JsonRpcPubSubOptions
     {

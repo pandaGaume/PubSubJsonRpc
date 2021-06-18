@@ -6,7 +6,7 @@
 
         public JsonRpcPubSubTopics() { }
 
-        public JsonRpcPubSubTopics(IRpcTopic request, IRpcTopic response, IRpcTopic notification) 
+        public JsonRpcPubSubTopics(IRpcTopic request, IRpcTopic response, IRpcTopic notification)
         {
             _request = request;
             _response = response;

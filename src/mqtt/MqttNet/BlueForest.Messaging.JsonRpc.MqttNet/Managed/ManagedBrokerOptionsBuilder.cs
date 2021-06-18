@@ -19,6 +19,6 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             return this;
         }
 
-        public ManagedBrokerOptions Build()=>new ManagedBrokerOptions() { ClientOptions = _settings, AutoReconnectMaxDelay = _autoReconnectDelay };
+        public ManagedBrokerOptions Build() => new ManagedBrokerOptions() { ClientOptions = _settings, AutoReconnectMaxDelay = _autoReconnectDelay };
     }
 }

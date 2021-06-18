@@ -7,8 +7,8 @@
         protected string _p, _s, _c, _n, _f, _t;
 
         public RpcTopic() { }
-        
-        public RpcTopic(IRpcTopic other) : this( other.Path, other.Stream, other.Channel, other.Namespace, other.From, other.To)
+
+        public RpcTopic(IRpcTopic other) : this(other.Path, other.Stream, other.Channel, other.Namespace, other.From, other.To)
         {
         }
 
@@ -26,7 +26,7 @@
         public string Stream { get => _s; set => _s = value; }
         public string Channel { get => _c; set => _c = value; }
         public string Namespace { get => _n; set => _n = value; }
-        public string From { get => _f; set => _f = value;  }
+        public string From { get => _f; set => _f = value; }
         public string To { get => _t; set => _t = value; }
 
         public IRpcTopic ReverseInPlace()
@@ -39,17 +39,17 @@
 
         public bool Equals([AllowNull] IRpcTopic other)
         {
-            return (other?.Path.Equals(_p) ?? false     ) &&
-                   (other?.Stream.Equals(_s) ?? false   ) &&
-                   (other?.Channel.Equals(_c) ?? false  ) &&
+            return (other?.Path.Equals(_p) ?? false) &&
+                   (other?.Stream.Equals(_s) ?? false) &&
+                   (other?.Channel.Equals(_c) ?? false) &&
                    (other?.Namespace.Equals(_n) ?? false) &&
-                   (other?.From.Equals(_f) ?? false     ) && 
-                   (other?.To.Equals(_t) ?? false       ) ;
+                   (other?.From.Equals(_f) ?? false) &&
+                   (other?.To.Equals(_t) ?? false);
         }
 
         public override string ToString()
         {
-            return DefaultTopicLogic.Shared.Assemble(this,TopicUse.Publish);
+            return DefaultTopicLogic.Shared.Assemble(this, TopicUse.Publish);
         }
     }
 }

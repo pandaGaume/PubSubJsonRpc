@@ -3,11 +3,11 @@ using System.Collections.Concurrent;
 
 namespace BlueForest.Messaging.JsonRpc
 {
-    public partial class JsonRpcPubSubHandlerBlock :IRequestIdFactory
+    public partial class JsonRpcPubSubHandlerBlock : IRequestIdFactory
     {
         public static long IdFactorySeedDefault = 0;
 
-        
+
         long _id = IdFactorySeedDefault;
         readonly long _seed = IdFactorySeedDefault;
         internal IRequestIdFactory _requestIdFactory;
@@ -15,7 +15,7 @@ namespace BlueForest.Messaging.JsonRpc
 
         public IRequestIdFactory RequestIdFactory
         {
-            get => _requestIdFactory?? this;
+            get => _requestIdFactory ?? this;
             set => _requestIdFactory = value;
         }
 

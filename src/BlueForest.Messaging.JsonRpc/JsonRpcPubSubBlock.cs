@@ -182,16 +182,16 @@ namespace BlueForest.Messaging.JsonRpc
 
         private IDictionary<string, string> ProcessType(Type apiType)
         {
-            var methods = apiType.GetMethods().Where(m => m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), true).Length != 0);
+            var methods = apiType.GetMethods().Where(m => m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), true).Length != 0).ToArray();
+
             if (apiType.IsClass)
             {
                 var interfaceMethods = apiType.GetInterfaces().SelectMany(i => i.GetMethods().Where(m => m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), true).Length != 0));
-                methods = methods.Concat(interfaceMethods);
+                methods = methods.Concat(interfaceMethods.Where(m=>!methods.Any(a=>a.Name == m.Name))).ToArray();
             }
-            var a = methods.ToArray();
-            if (a.Length != 0)
+            if (methods.Length != 0)
             {
-                return a.ToDictionary(m => m.Name, m => ((JsonRpcMethodNameAttribute)m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false)[0]).Name);
+                return methods.ToDictionary(m => m.Name, m => ((JsonRpcMethodNameAttribute)m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false)[0]).Name);
             }
             return null;
         }

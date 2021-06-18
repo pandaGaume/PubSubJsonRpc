@@ -2,7 +2,7 @@
 
 namespace BlueForest.Messaging.JsonRpc
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
+    [AttributeUsage(AttributeTargets.Method)]
     public class JsonRpcMethodNameAttribute : Attribute
     {
         public JsonRpcMethodNameAttribute()

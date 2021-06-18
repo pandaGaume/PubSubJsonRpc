@@ -8,7 +8,6 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         {
             _delegate = api;
         }
-
         public override JsonRpcPubSubTopics GetTopics(MqttJsonRpcServiceOptions options)
         {
             var session = options.Session;

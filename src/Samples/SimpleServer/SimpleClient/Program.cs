@@ -1,6 +1,7 @@
 ﻿using BlueForest.Messaging.JsonRpc;
 using BlueForest.Messaging.JsonRpc.MqttNet;
 using Devices;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,22 +79,32 @@ namespace SimpleClient
 
             Func<Task> toogle = async () =>
             {
-                var token = cancelToogleDaemon.Token;
-                if (!token.IsCancellationRequested)
+                var endOfDeamonToken = cancelToogleDaemon.Token;
+                if (!endOfDeamonToken.IsCancellationRequested)
                 {
                     var r = new Random();
                     do
                     {
                         try
                         {
-                            // set timeout
+                            // set request timeout
                             using (var src = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                             {
-                                // call the service
-                                await service.ToogleAsync(src.Token);
+                                using (CancellationTokenExtensions.CombinedCancellationToken cts = endOfDeamonToken.CombineWith(src.Token))
+                                {
+                                    // call the service
+                                    await service.ToogleAsync(cts.Token);
+                                }
                             }
+                            // then wait random time 
+                            var d = r.NextDouble() * 10000;
+                            await Task.Delay((int)d, endOfDeamonToken);
                         }
-                        catch (OperationCanceledException)
+                        catch (OperationCanceledException) when (endOfDeamonToken.IsCancellationRequested)
+                        {
+                            break;
+                        }
+                        catch (OperationCanceledException) when (!endOfDeamonToken.IsCancellationRequested)
                         {
                             // timeout
                         }
@@ -102,10 +113,7 @@ namespace SimpleClient
                             // internal error
                         }
 
-                        // then wait random time 
-                        var d = r.NextDouble() * 1000;
-                        await Task.Delay((int)d, token);
-                    } while (!token.IsCancellationRequested);
+                    } while (!endOfDeamonToken.IsCancellationRequested);
                 }
             };
 
@@ -118,11 +126,11 @@ namespace SimpleClient
             };
 
             rpc.Broker.OnDisconnected += (o, a) =>
-           {
-               // stopt the deamon when disconnected
-               cancelToogleDaemon.Cancel();
-               return Task.CompletedTask;
-           };
+            {
+                // stop the deamon when disconnected
+                cancelToogleDaemon.Cancel();
+                return Task.CompletedTask;
+            };
 
             // wait for ever...
             var completion = new TaskCompletionSource<bool>();

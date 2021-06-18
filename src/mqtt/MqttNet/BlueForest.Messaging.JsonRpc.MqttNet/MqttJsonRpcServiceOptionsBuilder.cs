@@ -9,15 +9,13 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         JsonRpcBrokerSession _session = null;
         JsonRpcBrokerRoute _route = null;
         int? _routeIndex = null;
-        TimeSpan? _requestTimeout = null;
 
 
         public MqttJsonRpcServiceOptions Build()=> new MqttJsonRpcServiceOptions()
             {
                 MqttClient = _client?? _builder?.Build(),
                 Session = _session,
-                Route = _route?? _session.Routes[_routeIndex??(_session.MainRoute??0)],
-                RequestTimeout = _requestTimeout
+                Route = _route?? _session.Routes[_routeIndex??(_session.MainRoute??0)]
             };
 
         public MqttJsonRpcServiceOptionsBuilder WithClient(JsonRpcManagedMqttClient client)
@@ -45,10 +43,6 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             _routeIndex = routeIndex;
             return this;
         }
-        public MqttJsonRpcServiceOptionsBuilder WithRequestTimeout(TimeSpan timeout)
-        {
-            _requestTimeout = timeout;
-            return this;
-        }
+
     }
 }

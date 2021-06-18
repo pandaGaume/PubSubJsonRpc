@@ -51,6 +51,9 @@ namespace BlueForest.Messaging.JsonRpc
                 }
                 catch
                 {
+#if DEBUG
+                    Console.WriteLine($"Invalid payload from {publishEvent.Topic}.");
+#endif
                 }
                 return new Tuple<JsonRpcMessage, IRpcTopic>(rpcMsg, publishEvent.Topic);
             }, smallBufferOptions);
@@ -136,16 +139,22 @@ namespace BlueForest.Messaging.JsonRpc
         public T Attach<T>(JsonRpcProxyOptions options = null) where T : class => (T)Attach(typeof(T), options);
         
         public void StartListening() => _rpc?.StartListening();
-        public StreamJsonRpc.JsonRpc RPC => _rpc;
         public JsonRpcPubSubOptions Options => _options;
         private void _rpc_Disconnected(object sender, JsonRpcDisconnectedEventArgs e)
         {
+#if DEBUG
+            Console.WriteLine($"Fatal Error Rpc Disconnected : {e.Reason}");
+#endif       
+            InitializeRpc();
+            StartListening();
         }
 
         protected virtual void InitializeRpc()
         {
             _rpc = new StreamJsonRpc.JsonRpc(_handler);
             _rpc.Disconnected += _rpc_Disconnected;
+            _rpc.CancellationStrategy = null;
+            _rpc.CancelLocallyInvokedMethodsWhenConnectionIsClosed = true;
 #if DEBUG
             _rpc.TraceSource.Switch.ShouldTrace(TraceEventType.Verbose);
             _rpc.TraceSource.Listeners.Add(new ConsoleTraceListener());

@@ -65,8 +65,7 @@ namespace SimpleClient
             var optionsBuilder = new MqttJsonRpcServiceOptionsBuilder()
                 .WithClient(managedClientBuilder)
                 .WithSession(session)
-                .WithRoute(session.GetMainRoute()) // Main route is defined in session, 0 by default
-                .WithRequestTimeout(TimeSpan.FromSeconds(5));
+                .WithRoute(session.GetMainRoute()); // Main route is defined in session, 0 by default
 
             // start the service with the above options
             await rpc.StartAsync(optionsBuilder.Build());
@@ -85,8 +84,21 @@ namespace SimpleClient
                     var r = new Random();
                     do
                     {
-                        // call the service
-                        await service.ToogleAsync();
+                        try
+                        {
+                            // set timeout
+                            var src = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                            // call the service
+                            await service.ToogleAsync(src.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // timeout
+                        }
+                        catch
+                        {
+                            // internal error
+                        }
 
                         // then wait random time 
                         var d = r.NextDouble() * 10000;

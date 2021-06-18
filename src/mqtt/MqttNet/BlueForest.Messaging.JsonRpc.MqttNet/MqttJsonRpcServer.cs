@@ -40,7 +40,6 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         public override void OnStarted()
         {
             _target.AddLocalRpcTarget(_delegate);
-            _target.RPC.CancelLocallyInvokedMethodsWhenConnectionIsClosed = true;
             _target.StartListening();
         }
     }

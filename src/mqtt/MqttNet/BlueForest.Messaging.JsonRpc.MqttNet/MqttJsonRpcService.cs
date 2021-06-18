@@ -41,8 +41,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             {
                 var o = new JsonRpcPubSubOptions()
                 {
-                    Topics = GetTopics(_options),
-                    RequestTimeout = options.RequestTimeout
+                    Topics = GetTopics(_options)
                 };
                 var overallQos = (MqttQualityOfServiceLevel)Math.Min(Route.Qos ?? DefaultQos, (int)MqttQualityOfServiceLevel.ExactlyOnce);
 

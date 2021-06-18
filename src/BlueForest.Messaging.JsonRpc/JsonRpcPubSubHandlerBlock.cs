@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
 using StreamJsonRpc;
 using StreamJsonRpc.Protocol;
 using System;
@@ -31,13 +32,7 @@ namespace BlueForest.Messaging.JsonRpc
             {
                 _source?.Complete();
             }, TaskScheduler.Default);
-            _cacheEntryOptions = new MemoryCacheEntryOptions().RegisterPostEvictionCallback(OnPostEviction);
-            if(_options.RequestTimeout.HasValue)
-            {
-                _cacheEntryOptions = _cacheEntryOptions.SetAbsoluteExpiration(_options.RequestTimeout.Value);
-            }
-
-        }
+         }
 
         public override bool CanRead => true;
         public override bool CanWrite => true;
@@ -53,10 +48,11 @@ namespace BlueForest.Messaging.JsonRpc
                     var newId = (RequestIdFactory ?? this).NextRequestId();
                     request.RequestId = newId;
                     _requestIdIndex.TryAdd(newId, (oldId, mess.Item2));
+                    return mess.Item1;
                 }
                 else if (mess.Item1 is JsonRpcResult result)
                 {
-                    if(_requestCache.TryGetValue(result.RequestId, out var id))
+                    if (_requestCache.TryGetValue(result.RequestId, out var id))
                     {
                         _requestCache.Remove(id);
                         return mess.Item1;
@@ -69,9 +65,21 @@ namespace BlueForest.Messaging.JsonRpc
                         _requestCache.Remove(id);
                         return mess.Item1;
                     }
-                }
 
-                return mess.Item1;
+                    try
+                    {
+                        await _evictedLock.WaitAsync(cancellationToken);
+                        if (_evicted.Contains(error.RequestId))
+                        {
+                            _evicted.Remove(error.RequestId);
+                            return mess.Item1;
+                        }
+                    }
+                    finally
+                    {
+                        _evictedLock.Release();
+                    }
+                }
             }
             return default;
         }
@@ -112,10 +120,12 @@ namespace BlueForest.Messaging.JsonRpc
                 } 
                 else if (c is JsonRpcRequest request)
                 {
-                    if (!request.IsResponseExpected) 
+                    if (request.IsResponseExpected) 
                     {
-                        _requestCache.Set(request.RequestId, request.RequestId, _cacheEntryOptions);
-                     }
+                        var cacheEntryOptions = new MemoryCacheEntryOptions().RegisterPostEvictionCallback(OnPostEviction);
+                        cacheEntryOptions.AddExpirationToken(new CancellationChangeToken(cancellationToken));
+                        _requestCache.Set(request.RequestId, request.RequestId, cacheEntryOptions);
+                    }
                     _source.Post(new Tuple<JsonRpcMessage, IRpcTopic>(c, request.IsNotification? _options.Topics.Notification : _options.Topics.Request));
                 }
             }

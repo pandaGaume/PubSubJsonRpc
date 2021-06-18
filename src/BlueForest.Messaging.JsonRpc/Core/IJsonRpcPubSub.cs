@@ -10,6 +10,5 @@ namespace BlueForest.Messaging.JsonRpc
         object Attach(Type api, JsonRpcProxyOptions options = null);
         T Attach<T>(JsonRpcProxyOptions options = null) where T : class;
         void StartListening();
-        StreamJsonRpc.JsonRpc RPC { get; }
     }
 }

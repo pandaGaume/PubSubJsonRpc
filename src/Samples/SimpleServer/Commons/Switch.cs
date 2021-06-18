@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Devices
@@ -31,10 +32,10 @@ namespace Devices
     public interface ISwitchApi
     {
         event EventHandler<bool> StatusChanged;
-        ValueTask<SetStatusResult> SetStatusAsync(bool status);
-        ValueTask<bool> GetStatusAsync();
-        ValueTask<SetStatusResult> ToogleAsync();
-        ValueTask CompleteAsync();
+        ValueTask<SetStatusResult> SetStatusAsync(bool status, CancellationToken token = default);
+        ValueTask<bool> GetStatusAsync(CancellationToken token = default);
+        ValueTask<SetStatusResult> ToogleAsync(CancellationToken token = default);
+        ValueTask CompleteAsync(CancellationToken token = default);
     }
 
     public class Switch : ISwitchApi
@@ -54,9 +55,9 @@ namespace Devices
         }
         public Task Completion => _completion.Task;
 
-        public ValueTask<bool> GetStatusAsync() => new ValueTask<bool>(_status);
+        public ValueTask<bool> GetStatusAsync(CancellationToken token=default) => new ValueTask<bool>(_status);
 
-        public ValueTask<SetStatusResult> SetStatusAsync(bool status)
+        public ValueTask<SetStatusResult> SetStatusAsync(bool status, CancellationToken token = default)
         {
             if (_status != status)
             {
@@ -67,9 +68,9 @@ namespace Devices
             return new ValueTask<SetStatusResult>(new SetStatusResult(_status));
         }
 
-        public ValueTask<SetStatusResult> ToogleAsync() => SetStatusAsync(!_status);
+        public ValueTask<SetStatusResult> ToogleAsync(CancellationToken token = default) => SetStatusAsync(!_status,token);
 
-        public ValueTask CompleteAsync()
+        public ValueTask CompleteAsync(CancellationToken token = default)
         {
             _completion.SetResult(_status);
             return new ValueTask();

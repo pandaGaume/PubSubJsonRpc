@@ -178,8 +178,6 @@ namespace BlueForest.Messaging.JsonRpc
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
-
         private IDictionary<string, string> ProcessType(Type apiType)
         {
             var methods = apiType.GetMethods().Where(m => m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), true).Length != 0).ToArray();
@@ -191,11 +189,10 @@ namespace BlueForest.Messaging.JsonRpc
             }
             if (methods.Length != 0)
             {
-                return methods.ToDictionary(m => m.Name, m => ((JsonRpcMethodNameAttribute)m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), false)[0]).Name);
+                return methods.ToDictionary(m => m.Name, m => ((JsonRpcMethodNameAttribute)m.GetCustomAttributes(typeof(JsonRpcMethodNameAttribute), true)[0]).Name);
             }
             return null;
         }
-
         private string GetMethodName(string method)
         {
             if (_nameIndex != null && _nameIndex.TryGetValue(method, out string name))
@@ -204,7 +201,6 @@ namespace BlueForest.Messaging.JsonRpc
             }
             return method;
         }
-
         internal ISourceBlock<IPublishEvent> Source => _source;
         public JsonRpcPubSubHandlerBlock RpcTarget => _handler;
         internal ITargetBlock<IPublishEvent> Target => _target;

@@ -35,7 +35,6 @@ namespace Devices
         event EventHandler<bool> StatusChanged;
         ValueTask<SetStatusResult> SetStatusAsync(bool status, CancellationToken token = default);
         ValueTask<bool> GetStatusAsync(CancellationToken token = default);
-        [JsonRpcMethodName("MyBeautifullToggle")]
         ValueTask<SetStatusResult> ToogleAsync(CancellationToken token = default);
         ValueTask CompleteAsync(CancellationToken token = default);
     }

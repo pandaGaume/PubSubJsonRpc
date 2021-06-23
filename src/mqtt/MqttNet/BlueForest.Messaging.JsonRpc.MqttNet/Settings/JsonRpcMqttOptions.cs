@@ -1,4 +1,4 @@
-﻿namespace BlueForest.Messaging.JsonRpc.MqttNet
+﻿namespace BlueForest.Messaging.JsonRpc
 {
     public class JsonRpcMqttOptions
     {

@@ -1,5 +1,10 @@
 ﻿namespace BlueForest.Messaging.JsonRpc
 {
+    public enum TopicUse
+    {
+        Publish, Subscribe
+    }
+
     public interface IRpcTopicLogic
     {
         string StreamName { get; set; }

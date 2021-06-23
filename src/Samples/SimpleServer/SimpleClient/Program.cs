@@ -1,4 +1,5 @@
-﻿using BlueForest.Messaging.JsonRpc;
+﻿using BlueForest.Messaging;
+using BlueForest.Messaging.JsonRpc;
 using BlueForest.Messaging.JsonRpc.MqttNet;
 using Devices;
 using Microsoft.VisualStudio.Threading;
@@ -60,7 +61,7 @@ namespace SimpleClient
             // build the managed client.
             // NOTE : we may share one client with several RpcClient
             var managedBrokerOptionsBuilder = new ManagedBrokerOptionsBuilder().WithMqttBrokerSettings(brokerOptions);
-            var managedClientBuilder = new JsonRpcManagedClientBuilder().WithOptions(managedBrokerOptionsBuilder);
+            var managedClientBuilder = new ManagedMqttClientBuilder().WithOptions(managedBrokerOptionsBuilder);
 
             // build the Rpc options.
             var optionsBuilder = new MqttJsonRpcServiceOptionsBuilder()
@@ -88,17 +89,12 @@ namespace SimpleClient
                         try
                         {
                             // set request timeout
-                            using (var src = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+                            var src = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                            using (CancellationTokenExtensions.CombinedCancellationToken cts = endOfDeamonToken.CombineWith(src.Token))
                             {
-                                using (CancellationTokenExtensions.CombinedCancellationToken cts = endOfDeamonToken.CombineWith(src.Token))
-                                {
-                                    // call the service
-                                    await service.ToogleAsync(cts.Token);
-                                }
+                                // call the service
+                                await service.ToogleAsync(cts.Token);
                             }
-                            // then wait random time 
-                            var d = r.NextDouble() * 10000;
-                            await Task.Delay((int)d, endOfDeamonToken);
                         }
                         catch (OperationCanceledException) when (endOfDeamonToken.IsCancellationRequested)
                         {
@@ -112,6 +108,10 @@ namespace SimpleClient
                         {
                             // internal error
                         }
+
+                        // then wait random time 
+                        var d = r.NextDouble() * 10000;
+                        await Task.Delay((int)d, endOfDeamonToken);
 
                     } while (!endOfDeamonToken.IsCancellationRequested);
                 }

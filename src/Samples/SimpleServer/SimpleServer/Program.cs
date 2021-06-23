@@ -1,4 +1,5 @@
-﻿using BlueForest.Messaging.JsonRpc;
+﻿using BlueForest.Messaging;
+using BlueForest.Messaging.JsonRpc;
 using BlueForest.Messaging.JsonRpc.MqttNet;
 using Devices;
 using System.Threading.Tasks;
@@ -55,7 +56,7 @@ namespace SimpleServer
 
             // build the managed client.
             var managedBrokerOptionsBuilder = new ManagedBrokerOptionsBuilder().WithMqttBrokerSettings(brokerOptions);
-            var managedClientBuilder = new JsonRpcManagedClientBuilder().WithOptions(managedBrokerOptionsBuilder);
+            var managedClientBuilder = new ManagedMqttClientBuilder().WithOptions(managedBrokerOptionsBuilder);
 
             // build the options.
             var optionsBuilder = new MqttJsonRpcServiceOptionsBuilder()

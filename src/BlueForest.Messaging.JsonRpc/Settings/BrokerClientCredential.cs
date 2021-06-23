@@ -1,4 +1,4 @@
-﻿namespace BlueForest.Messaging.JsonRpc
+﻿namespace BlueForest.Messaging
 {
     public class BrokerClientCredential
     {

@@ -1,6 +1,6 @@
 ﻿using MQTTnet.Client.Options;
 
-namespace BlueForest.Messaging.JsonRpc.MqttNet
+namespace BlueForest.Messaging
 {
     public static class BrokerSettingsExtensions
     {
@@ -16,9 +16,5 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             var options = (settings.IsSecure ?? false ? optionsBuilder.WithTls() : optionsBuilder).Build();
             return options;
         }
-
-        public static JsonRpcBrokerSession GetMainSession(this JsonRpcMqttOptions settings) => settings.Sessions[settings.MainSession ?? 0];
-        public static JsonRpcBrokerRoute GetMainRoute(this JsonRpcBrokerSession session) => session.Routes[session.MainRoute ?? 0];
-
     }
 }

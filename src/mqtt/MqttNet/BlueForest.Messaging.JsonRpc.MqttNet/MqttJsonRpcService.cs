@@ -1,9 +1,16 @@
-﻿using MQTTnet.Client.Publishing;
+﻿using BlueForest.Messaging.MqttNet;
+using MQTTnet;
+using MQTTnet.Client.Publishing;
+using MQTTnet.Client.Subscribing;
 using MQTTnet.Protocol;
 using StreamJsonRpc;
 using StreamJsonRpc.Protocol;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -22,13 +29,16 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         public string Name => _options.Session.Name;
         public ITargetBlock<IPublishEvent> Target => _target;
         public T Delegate => _delegate;
-        public JsonRpcManagedMqttClient Broker => _options.MqttClient;
+        public IManagedMqttClient Broker => _options.MqttClient;
         public JsonRpcBrokerSession Session => _options.Session;
         public JsonRpcBrokerRoute Route => _options.Route;
 
         public async Task StartAsync(MqttJsonRpcServiceOptions options)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            
+            // ensure topic logic is initialized
+            _options.TopicLogic = _options.TopicLogic ?? DefaultTopicLogic.Shared;
 
             // make sure our complete call gets propagated throughout the whole pipeline
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
@@ -49,8 +59,16 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                 {
                     try
                     {
-                        var publishTopic = client.TopicLogic.Assemble(e.Topic, TopicUse.Publish);
-                        var publishResult = await client.PublishAsync(publishTopic, e.Payload, overallQos);
+
+                        var tl = _options.TopicLogic ?? DefaultTopicLogic.Shared;
+                        var publishTopic = tl.Assemble(e.Topic, TopicUse.Publish);
+                        var p = e.Payload.ToArray();
+#if DEBUG
+                        Console.WriteLine($"Send message, topic='{publishTopic}'");
+                        Console.WriteLine($"              payload='{Encoding.UTF8.GetString(p)}'");
+#endif
+                        var messBuilder = new MqttApplicationMessageBuilder().WithPayload(p).WithTopic(publishTopic).WithQualityOfServiceLevel(overallQos);
+                        var publishResult = await client.Client.PublishAsync(messBuilder.Build(), CancellationToken.None);
                         if (publishResult.ReasonCode != MqttClientPublishReasonCode.Success)
                         {
                             OnPublishFault(e);
@@ -67,15 +85,48 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 
                 client.OnConnected += async (o, args) =>
                 {
+                    var optionsBuilder = new MqttClientSubscribeOptionsBuilder();
+                    var tl = _options.TopicLogic ?? DefaultTopicLogic.Shared;
                     foreach (var s in Subscriptions(_target.Options.Topics))
                     {
-                        var subscribeResult = await client.SubscribeAsync(target, s, overallQos);
+                        var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(overallQos).WithTopic(tl.Assemble(s, TopicUse.Subscribe));
+                        optionsBuilder.WithTopicFilter(filterBuilder);
                     }
+                    var subscribeResult = await client.Client.SubscribeAsync(optionsBuilder.Build(), CancellationToken.None);
                 };
 
+                client.OnMessage += OnMessageAsync;
                 OnStarted();
             }
             await options.MqttClient.StartAsync();
+        }
+
+        private async Task OnMessageAsync(object sender, MqttApplicationMessageReceivedEventArgs args)
+        {
+            try
+            {
+                var tl = _options.TopicLogic ?? DefaultTopicLogic.Shared;
+                var t = tl.Parse(args.ApplicationMessage.Topic);
+                foreach (var s in Subscriptions(_target.Options.Topics).Where(s => tl.Match(s,t)))
+                {
+#if DEBUG
+                    Console.WriteLine($"Received message, topic='{args.ApplicationMessage.Topic}'");
+                    Console.WriteLine($"                  payload='{Encoding.UTF8.GetString(args.ApplicationMessage.Payload)}'");
+#endif
+                    var e = new PublishEvent()
+                    {
+                        Payload = new ReadOnlySequence<byte>(args.ApplicationMessage.Payload),
+                        Topic = t
+                    };
+                    await _target.SendAsync(e);
+                }
+            }
+            catch (FormatException)
+            {
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private void OnPublishFault(IPublishEvent publish, Exception ex = null)

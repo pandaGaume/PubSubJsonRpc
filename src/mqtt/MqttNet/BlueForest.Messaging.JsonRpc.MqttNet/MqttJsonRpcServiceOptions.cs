@@ -1,12 +1,12 @@
-﻿using System;
+﻿using BlueForest.Messaging.MqttNet;
 
 namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class MqttJsonRpcServiceOptions
     {
-        public JsonRpcManagedMqttClient MqttClient { get; set; }
+        public IManagedMqttClient MqttClient { get; set; }
+        public IRpcTopicLogic TopicLogic { get; set; }
         public JsonRpcBrokerSession Session { get; set; }
         public JsonRpcBrokerRoute Route { get; set; }
-        public TimeSpan? RequestTimeout { get; set; }
     }
 }

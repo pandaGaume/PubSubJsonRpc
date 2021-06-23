@@ -11,12 +11,14 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             var session = options.Session;
             var client = options.MqttClient;
             var route = options.Route;
-            var stream = route.Stream ?? client.TopicLogic.StreamName ?? DefaultTopicLogic.Shared.StreamName;
-            var channels = route.Channels ?? client.TopicLogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames;
+            var tlogic = options.TopicLogic ?? DefaultTopicLogic.Shared;
 
-            var request = channels.Request ?? (client.TopicLogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames).Request;
-            var response = channels.Response ?? (client.TopicLogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames).Response;
-            var notification = channels.Notification ?? (client.TopicLogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames).Notification;
+            var stream = route.Stream ?? tlogic.StreamName ?? DefaultTopicLogic.Shared.StreamName;
+            var channels = route.Channels ?? tlogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames;
+
+            var request = channels.Request ?? (tlogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames).Request;
+            var response = channels.Response ?? (tlogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames).Response;
+            var notification = channels.Notification ?? (tlogic.ChannelNames ?? DefaultTopicLogic.Shared.ChannelNames).Notification;
 
             var ns = route.Namespace;
             var name = session.Name;

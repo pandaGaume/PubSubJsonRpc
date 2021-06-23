@@ -1,9 +1,11 @@
-﻿namespace BlueForest.Messaging.JsonRpc.MqttNet
+﻿using BlueForest.Messaging.MqttNet;
+
+namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class MqttJsonRpcServiceOptionsBuilder
     {
-        JsonRpcManagedMqttClient _client = null;
-        JsonRpcManagedClientBuilder _builder = null;
+        IManagedMqttClient _client = null;
+        ManagedMqttClientBuilder _builder = null;
         JsonRpcBrokerSession _session = null;
         JsonRpcBrokerRoute _route = null;
         int? _routeIndex = null;
@@ -16,12 +18,12 @@
             Route = _route ?? _session.Routes[_routeIndex ?? (_session.MainRoute ?? 0)]
         };
 
-        public MqttJsonRpcServiceOptionsBuilder WithClient(JsonRpcManagedMqttClient client)
+        public MqttJsonRpcServiceOptionsBuilder WithClient(IManagedMqttClient client)
         {
             _client = client;
             return this;
         }
-        public MqttJsonRpcServiceOptionsBuilder WithClient(JsonRpcManagedClientBuilder builder)
+        public MqttJsonRpcServiceOptionsBuilder WithClient(ManagedMqttClientBuilder builder)
         {
             _builder = builder;
             return this;
@@ -41,6 +43,5 @@
             _routeIndex = routeIndex;
             return this;
         }
-
     }
 }

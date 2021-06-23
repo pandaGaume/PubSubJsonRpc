@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="MQTTnet" Version="3.0.15" />
+    <PackageReference Include="System.Reactive" Version="4.4.1" />
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="5.0.0" />
   </ItemGroup>
 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BlueForest.Messaging.JsonRpc.MqttNet
+namespace BlueForest.Messaging
 {
     public class ManagedBrokerOptionsBuilder
     {

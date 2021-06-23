@@ -1,9 +1,5 @@
 ﻿namespace BlueForest.Messaging.JsonRpc
 {
-    public enum TopicUse
-    {
-        Publish, Subscribe
-    }
 
     public interface IRpcTopic
     {

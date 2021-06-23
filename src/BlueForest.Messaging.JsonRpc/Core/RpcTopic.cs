@@ -1,18 +1,18 @@
-﻿namespace BlueForest.Messaging.JsonRpc
+﻿using System;
+
+namespace BlueForest.Messaging.JsonRpc
 {
-    using System;
-    using System.Diagnostics.CodeAnalysis;
     public class RpcTopic : IRpcTopic, IEquatable<IRpcTopic>
     {
         int? _hash;
         protected string _p, _s, _c, _n, _f, _t;
 
-        public RpcTopic() { }
-
+        public RpcTopic() 
+        { 
+        }
         public RpcTopic(IRpcTopic other) : this(other.Path, other.Stream, other.Channel, other.Namespace, other.From, other.To)
         {
         }
-
         public RpcTopic(string path, string stream, string channel, string @namespace, string from, string to)
         {
             _p = path;
@@ -21,7 +21,7 @@
             _n = @namespace;
             _f = from;
             _t = to;
-            ComputeHash();
+            _hash = null;
         }
 
         public string Path { get => _p; set{ _p = value; _hash = null; } }
@@ -39,7 +39,7 @@
             return this;
         }
 
-        public bool Equals([AllowNull] IRpcTopic other)
+        public bool Equals(IRpcTopic other)
         {
             if (other == null) return false;
             if( other.GetHashCode() != GetHashCode() ) return false;
@@ -53,7 +53,7 @@
 
         public override string ToString()
         {
-            return DefaultTopicLogic.Shared.Assemble(this, TopicUse.Publish);
+            return DefaultRpcTopicLogic.Shared.Assemble(this, TopicUse.Publish);
         }
 
         public override int GetHashCode()

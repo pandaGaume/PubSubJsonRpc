@@ -3,21 +3,19 @@ using System.Text;
 
 namespace BlueForest.Messaging.JsonRpc
 {
-    public class DefaultTopicLogic : IRpcTopicLogic
+    public class DefaultRpcTopicLogic : IRpcTopicLogic
     {
         const string StreamDefault = "rpc";
         const int MinimumPartsCount = 5;
 
         static readonly JsonRpcBrokerChannels ChannelsDefault = new JsonRpcBrokerChannels() { Request = "0", Response = "1", Notification = "2" };
-        public static readonly IRpcTopicLogic Shared = new DefaultTopicLogic()
+        public static readonly IRpcTopicLogic Shared = new DefaultRpcTopicLogic()
         {
             StreamName = StreamDefault,
             ChannelNames = ChannelsDefault
         };
 
         public const char SEPARATOR = '/';
-        public const char SINGLE_LEVEL_WILD_CHAR = '+';
-        public const char MULTI_LEVEL_WILD_CHAR = '#';
         public const string SINGLE_LEVEL_WILD_STR = "+";
         public const string MULTI_LEVEL_WILD_STR = "#";
 
@@ -29,7 +27,7 @@ namespace BlueForest.Messaging.JsonRpc
 
         public string Assemble(IRpcTopic topic, TopicUse usage)
         {
-            string[] tmp = { topic.Path, topic.Stream, topic.Channel, topic.Namespace, topic.From, topic.To };
+            string[] tmp = ToArray(topic);
             StringBuilder sb = new StringBuilder();
             int i = 0;
 
@@ -58,12 +56,31 @@ namespace BlueForest.Messaging.JsonRpc
 
         public bool Match(IRpcTopic a, IRpcTopic b)
         {
-            // according the usage, we assume receiving matching subscription topic.
-            // the goal here is to compare the rpc part ONLY, which is limited to <channel>/<namespace>/<from>/<to>
-            return (a.Channel == SINGLE_LEVEL_WILD_STR || String.Compare(a.Channel, b.Channel) == 0) &&
-                   (a.Namespace == SINGLE_LEVEL_WILD_STR || String.Compare(a.Namespace, b.Namespace) == 0) &&
-                   (a.From == SINGLE_LEVEL_WILD_STR || String.Compare(a.From, b.From) == 0) &&
-                   (a.To == MULTI_LEVEL_WILD_STR || String.Compare(a.To, b.To) == 0);
+            var s = ToArray(a);
+            var t = ToArray(b);
+
+            if (s.Length > t.Length)
+            {
+                return false;
+            }
+
+            for (var i = 0; i != s.Length; i++)
+            {
+                var p0 = s[i];
+                if (p0 == SINGLE_LEVEL_WILD_STR)
+                {
+                    continue;
+                }
+                if (p0 == MULTI_LEVEL_WILD_STR)
+                {
+                    return true;
+                }
+                if (p0.CompareTo(t[i]) != 0)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public IRpcTopic Parse(string topicStr)
@@ -94,6 +111,11 @@ namespace BlueForest.Messaging.JsonRpc
                 t.To = tmp[i];
             }
             return t;
+        }
+
+        public string[] ToArray(IRpcTopic topic)
+        {
+            return new string[]{ topic.Path, topic.Stream, topic.Channel, topic.Namespace, topic.From, topic.To };
         }
     }
 }

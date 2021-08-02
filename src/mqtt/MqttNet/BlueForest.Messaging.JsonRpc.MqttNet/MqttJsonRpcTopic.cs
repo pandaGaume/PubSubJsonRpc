@@ -2,18 +2,18 @@
 
 namespace BlueForest.Messaging.JsonRpc
 {
-    public class RpcTopic : IRpcTopic, IEquatable<IRpcTopic>
+    public class MqttJsonRpcTopic : IRpcTopic, IEquatable<IRpcTopic>
     {
         int? _hash;
         protected string _p, _s, _c, _n, _f, _t;
 
-        public RpcTopic() 
+        public MqttJsonRpcTopic() 
         { 
         }
-        public RpcTopic(IRpcTopic other) : this(other.Path, other.Stream, other.Channel, other.Namespace, other.From, other.To)
+        public MqttJsonRpcTopic(IRpcTopic other) : this(other.Path, other.Stream, other.Channel, other.Namespace, other.From, other.To)
         {
         }
-        public RpcTopic(string path, string stream, string channel, string @namespace, string from, string to)
+        public MqttJsonRpcTopic(string path, string stream, string channel, string @namespace, string from, string to)
         {
             _p = path;
             _s = stream;
@@ -53,7 +53,7 @@ namespace BlueForest.Messaging.JsonRpc
 
         public override string ToString()
         {
-            return DefaultRpcTopicLogic.Shared.Assemble(this, TopicUse.Publish);
+            return MqttJsonRpcTopicLogic.Shared.Assemble(this, TopicUse.Publish);
         }
 
         public override int GetHashCode()

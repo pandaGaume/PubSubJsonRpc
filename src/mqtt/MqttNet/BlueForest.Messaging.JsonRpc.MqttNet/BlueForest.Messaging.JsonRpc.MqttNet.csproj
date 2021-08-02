@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\BlueForest.MqttNet\src\BlueForest.MqttNet\BlueForest.MqttNet.csproj" />
     <ProjectReference Include="..\..\..\BlueForest.Messaging.JsonRpc\BlueForest.Messaging.JsonRpc.csproj" />
   </ItemGroup>
 

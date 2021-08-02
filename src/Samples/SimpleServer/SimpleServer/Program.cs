@@ -1,7 +1,7 @@
 ﻿using BlueForest.Messaging;
 using BlueForest.Messaging.JsonRpc;
 using BlueForest.Messaging.JsonRpc.MqttNet;
-using BlueForest.Messaging.MqttNet;
+using BlueForest.MqttNet;
 using Devices;
 using System.Threading.Tasks;
 

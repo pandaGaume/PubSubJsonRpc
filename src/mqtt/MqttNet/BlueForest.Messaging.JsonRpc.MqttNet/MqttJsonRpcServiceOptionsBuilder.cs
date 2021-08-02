@@ -1,4 +1,4 @@
-﻿using BlueForest.Messaging.MqttNet;
+﻿using BlueForest.MqttNet;
 
 namespace BlueForest.Messaging.JsonRpc.MqttNet
 {

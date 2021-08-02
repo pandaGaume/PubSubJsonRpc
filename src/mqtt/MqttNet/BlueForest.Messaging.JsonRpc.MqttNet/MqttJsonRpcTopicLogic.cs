@@ -1,15 +1,16 @@
-﻿using System;
+﻿using BlueForest.MqttNet;
+using System;
 using System.Text;
 
 namespace BlueForest.Messaging.JsonRpc
 {
-    public class DefaultRpcTopicLogic : IRpcTopicLogic
+    public class MqttJsonRpcTopicLogic : IRpcTopicLogic
     {
         const string StreamDefault = "rpc";
         const int MinimumPartsCount = 5;
 
         static readonly JsonRpcBrokerChannels ChannelsDefault = new JsonRpcBrokerChannels() { Request = "0", Response = "1", Notification = "2" };
-        public static readonly IRpcTopicLogic Shared = new DefaultRpcTopicLogic()
+        public static readonly IRpcTopicLogic Shared = new MqttJsonRpcTopicLogic()
         {
             StreamName = StreamDefault,
             ChannelNames = ChannelsDefault
@@ -54,34 +55,7 @@ namespace BlueForest.Messaging.JsonRpc
             return sb.ToString();
         }
 
-        public bool Match(IRpcTopic a, IRpcTopic b)
-        {
-            var s = ToArray(a);
-            var t = ToArray(b);
-
-            if (s.Length > t.Length)
-            {
-                return false;
-            }
-
-            for (var i = 0; i != s.Length; i++)
-            {
-                var p0 = s[i];
-                if (p0 == SINGLE_LEVEL_WILD_STR)
-                {
-                    continue;
-                }
-                if (p0 == MULTI_LEVEL_WILD_STR)
-                {
-                    return true;
-                }
-                if (p0.CompareTo(t[i]) != 0)
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
+        public bool Match(IRpcTopic a, IRpcTopic b) => ToArray(a).Match(ToArray(b));
 
         public IRpcTopic Parse(string topicStr)
         {
@@ -100,7 +74,7 @@ namespace BlueForest.Messaging.JsonRpc
             {
                 throw new FormatException();
             }
-            var t = new RpcTopic();
+            var t = new MqttJsonRpcTopic();
             t.Path = String.Join(SEPARATOR, tmp, 0, i);
             t.Stream = tmp[i++];
             t.Channel = tmp[i++];

@@ -13,22 +13,22 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             var session = options.Session;
             var client = options.MqttClient;
             var route = options.Route;
-            var tlogic = options.TopicLogic ?? DefaultRpcTopicLogic.Shared;
-            var stream = route.Stream ?? tlogic.StreamName ?? DefaultRpcTopicLogic.Shared.StreamName;
-            var channels = route.Channels ?? tlogic.ChannelNames ?? DefaultRpcTopicLogic.Shared.ChannelNames;
+            var tlogic = options.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
+            var stream = route.Stream ?? tlogic.StreamName ?? MqttJsonRpcTopicLogic.Shared.StreamName;
+            var channels = route.Channels ?? tlogic.ChannelNames ?? MqttJsonRpcTopicLogic.Shared.ChannelNames;
 
-            var request = channels.Request ?? (tlogic.ChannelNames ?? DefaultRpcTopicLogic.Shared.ChannelNames).Request;
-            var response = channels.Response ?? (tlogic.ChannelNames ?? DefaultRpcTopicLogic.Shared.ChannelNames).Response;
-            var notification = channels.Notification ?? (tlogic.ChannelNames ?? DefaultRpcTopicLogic.Shared.ChannelNames).Notification;
+            var request = channels.Request ?? (tlogic.ChannelNames ?? MqttJsonRpcTopicLogic.Shared.ChannelNames).Request;
+            var response = channels.Response ?? (tlogic.ChannelNames ?? MqttJsonRpcTopicLogic.Shared.ChannelNames).Response;
+            var notification = channels.Notification ?? (tlogic.ChannelNames ?? MqttJsonRpcTopicLogic.Shared.ChannelNames).Notification;
 
             var ns = route.Namespace;
             var name = session.Name;
             var path = route.Path;
             var to = route.To;
 
-            var requestTopic = new RpcTopic(path, stream, request, ns, DefaultRpcTopicLogic.SINGLE_LEVEL_WILD_STR, name);
-            var responseTopic = new RpcTopic(path, stream, response, ns, to, name);
-            var notificationTopic = new RpcTopic(path, stream, notification, ns, name, null);
+            var requestTopic = new MqttJsonRpcTopic(path, stream, request, ns, MqttJsonRpcTopicLogic.SINGLE_LEVEL_WILD_STR, name);
+            var responseTopic = new MqttJsonRpcTopic(path, stream, response, ns, to, name);
+            var notificationTopic = new MqttJsonRpcTopic(path, stream, notification, ns, name, null);
             var topics = new JsonRpcPubSubTopics(requestTopic, responseTopic, notificationTopic);
             return topics;
         }

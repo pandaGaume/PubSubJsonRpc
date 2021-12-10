@@ -25,6 +25,12 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         internal T _delegate;
         internal JsonRpcPubSubBlock _target;
         private bool disposedValue;
+
+        public MqttJsonRpcService(MqttJsonRpcServiceOptions options = null)
+        {
+            _options = options;
+        }
+
         public string Namespace => _options.Route.Namespace;
         public string Name => _options.Session.Name;
         public ITargetBlock<IPublishEvent> Target => _target;
@@ -33,12 +39,15 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         public JsonRpcBrokerSession Session => _options.Session;
         public JsonRpcBrokerRoute Route => _options.Route;
 
-        public async Task StartAsync(MqttJsonRpcServiceOptions options)
+
+
+
+        public async Task StartAsync(MqttJsonRpcServiceOptions options = null)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            
+            var localOptions = options ?? _options ?? throw new ArgumentNullException(nameof(options));
+
             // ensure topic logic is initialized
-            _options.TopicLogic = _options.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
+            localOptions.TopicLogic = localOptions.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
 
             // make sure our complete call gets propagated throughout the whole pipeline
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
@@ -49,7 +58,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             {
                 var o = new JsonRpcPubSubOptions()
                 {
-                    Topics = GetTopics(_options)
+                    Topics = GetTopics(localOptions)
                 };
                 var overallQos = (MqttQualityOfServiceLevel)Math.Min(Route.Qos ?? DefaultQos, (int)MqttQualityOfServiceLevel.ExactlyOnce);
 
@@ -60,7 +69,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                     try
                     {
 
-                        var tl = _options.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
+                        var tl = localOptions.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
                         var publishTopic = tl.Assemble(e.Topic, TopicUse.Publish);
                         var p = e.Payload.ToArray();
 #if DEBUG
@@ -86,7 +95,7 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
                 client.OnConnected += async (o, args) =>
                 {
                     var optionsBuilder = new MqttClientSubscribeOptionsBuilder();
-                    var tl = _options.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
+                    var tl = localOptions.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
                     foreach (var s in Subscriptions(_target.Options.Topics))
                     {
                         var filterBuilder = new MqttTopicFilterBuilder().WithQualityOfServiceLevel(overallQos).WithTopic(tl.Assemble(s, TopicUse.Subscribe));

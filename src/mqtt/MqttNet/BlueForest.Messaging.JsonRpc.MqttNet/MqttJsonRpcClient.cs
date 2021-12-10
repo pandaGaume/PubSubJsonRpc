@@ -6,10 +6,13 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         where T : class
     {
 
+        public MqttJsonRpcClient(MqttJsonRpcServiceOptions options = null) : base(options)
+        {
+        }
+
         public override JsonRpcPubSubTopics GetTopics(MqttJsonRpcServiceOptions options)
         {
             var session = options.Session;
-            var client = options.MqttClient;
             var route = options.Route;
             var tlogic = options.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
 

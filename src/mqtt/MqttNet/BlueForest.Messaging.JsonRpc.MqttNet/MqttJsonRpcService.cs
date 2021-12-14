@@ -26,20 +26,19 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
         internal JsonRpcPubSubBlock _target;
         private bool disposedValue;
 
-        public MqttJsonRpcService(MqttJsonRpcServiceOptions options = null)
+        public MqttJsonRpcService(MqttJsonRpcServiceOptions options)
         {
             _options = options;
         }
 
-        public string Namespace => _options.Route.Namespace;
-        public string Name => _options.Session.Name;
+        public MqttJsonRpcServiceOptions Options => _options;
+        public string Namespace => _options?.Route?.Namespace;
+        public string Name => _options?.Session?.Name;
         public ITargetBlock<IPublishEvent> Target => _target;
         public T Delegate => _delegate;
-        public IManagedMqttClient Broker => _options.MqttClient;
-        public JsonRpcBrokerSession Session => _options.Session;
-        public JsonRpcBrokerRoute Route => _options.Route;
-
-
+        public IManagedMqttClient Broker => _options?.MqttClient;
+        public JsonRpcBrokerSession Session => _options?.Session;
+        public JsonRpcBrokerRoute Route => _options?.Route;
 
 
         public async Task StartAsync(MqttJsonRpcServiceOptions options = null)
@@ -52,8 +51,8 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
             // make sure our complete call gets propagated throughout the whole pipeline
             var linkOptions = new DataflowLinkOptions { PropagateCompletion = true };
 
-            var session = Session;
-            var client = Broker;
+            var session = localOptions?.Session??Session;
+            var client = localOptions?.MqttClient ?? Broker;
             if (client != null)
             {
                 var o = new JsonRpcPubSubOptions()

@@ -4,16 +4,17 @@ namespace BlueForest.Messaging.JsonRpc.MqttNet
 {
     public class MqttJsonRpcServer<T> : MqttJsonRpcService<T> where T : class
     {
-        public MqttJsonRpcServer(T api)
+        public MqttJsonRpcServer(T api, MqttJsonRpcServiceOptions options) : base(options)
         {
             _delegate = api;
         }
         public override JsonRpcPubSubTopics GetTopics(MqttJsonRpcServiceOptions options)
         {
-            var session = options.Session;
-            var client = options.MqttClient;
-            var route = options.Route;
-            var tlogic = options.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
+            var localOptions = options ?? Options;
+            var session = localOptions.Session;
+            var client = localOptions.MqttClient;
+            var route = localOptions.Route;
+            var tlogic = localOptions.TopicLogic ?? MqttJsonRpcTopicLogic.Shared;
             var stream = route.Stream ?? tlogic.StreamName ?? MqttJsonRpcTopicLogic.Shared.StreamName;
             var channels = route.Channels ?? tlogic.ChannelNames ?? MqttJsonRpcTopicLogic.Shared.ChannelNames;
 

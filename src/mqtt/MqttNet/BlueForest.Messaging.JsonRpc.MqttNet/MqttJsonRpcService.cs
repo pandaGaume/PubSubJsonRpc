@@ -3,7 +3,6 @@ using MQTTnet;
 using MQTTnet.Client.Publishing;
 using MQTTnet.Client.Subscribing;
 using MQTTnet.Protocol;
-using StreamJsonRpc;
 using StreamJsonRpc.Protocol;
 using System;
 using System.Buffers;

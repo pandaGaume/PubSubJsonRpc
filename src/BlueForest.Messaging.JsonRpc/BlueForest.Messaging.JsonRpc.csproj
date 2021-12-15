@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
-    <PackageReference Include="StreamJsonRpc" Version="2.8.21" />
+    <PackageReference Include="StreamJsonRpc" Version="2.9.85" />
   </ItemGroup>
 
 </Project>
